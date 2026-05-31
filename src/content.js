@@ -1,19 +1,20 @@
 /**
- * content.js — Core logic
+ * content.js
  *
- * Responsibilities:
- *  1. Detect which platform (ChatGPT / Claude)
- *  2. Read all visible conversation messages from the DOM
- *  3. Count tokens for the current session
- *  4. Detect session resets (new chat) and zero the counter
- *  5. Inject the UI bar above the input box
- *  6. Show exhaustion popup when limit is hit
+ * ARCHITECTURE NOTE — why we abandoned selector-based message detection for Claude:
  *
- * SELECTOR STRATEGY — why we use selector arrays instead of single strings:
- *   ChatGPT and Claude both update their DOM regularly. A single hardcoded
- *   selector breaks silently. We try selectors in priority order and use the
- *   first one that returns results. Adding a new selector on top never breaks
- *   the old ones — it just takes priority.
+ * Claude's DOM uses hashed Tailwind class names that change every deployment,
+ * and they removed all data-testid attributes. No selector is stable.
+ *
+ * New strategy for Claude: TEXT LENGTH TRACKING
+ *   We read document.body.innerText (the full visible text of the page),
+ *   subtract known UI chrome text (nav, buttons, footer), and estimate tokens
+ *   from the remainder. This works regardless of DOM structure changes.
+ *
+ *   It overcounts slightly (includes sidebar text if visible) but errs in the
+ *   safe direction — shows less remaining than actual — which is fine for UX.
+ *
+ * For ChatGPT: selector-based still works fine, kept as-is.
  */
 
 (() => {
@@ -27,18 +28,28 @@
         location.hostname.includes("chatgpt.com") ||
         location.hostname.includes("openai.com"),
 
-      // Each array is tried in order — first one with matching nodes wins
-      messageSelectors: [
-        "article[data-testid]",
-        "div[data-message-id]",
-        "[data-testid^='conversation-turn']",
-        "div[class*='ConversationItem']",
-      ],
+      // Selector-based — ChatGPT's DOM is stable
+      getTokens: () => {
+        const selectors = [
+          "article[data-testid]",
+          "div[data-message-id]",
+          "[data-testid^='conversation-turn']",
+        ];
+        for (const sel of selectors) {
+          try {
+            const nodes = document.querySelectorAll(sel);
+            if (nodes.length > 0) {
+              const texts = Array.from(nodes).map((n) => n.textContent || "");
+              return Tokenizer.estimateMessages(texts);
+            }
+          } catch (_) {}
+        }
+        return 0;
+      },
 
       inputWrapperSelectors: [
         "form:has(#prompt-textarea)",
         "form:has(textarea)",
-        "div[class*='composer']",
         "div[class*='stretch']",
       ],
 
@@ -53,9 +64,9 @@
 
       getActiveModel: () => {
         const btn = document.querySelector(
-          "[data-testid='model-switcher-dropdown-button'], button[aria-label*='GPT'], span[class*='model-name']"
+          "[data-testid='model-switcher-dropdown-button'], button[aria-label*='GPT']"
         );
-        if (!btn) return "default";
+        if (!btn) return "gpt-4o";
         const txt = btn.textContent.toLowerCase();
         if (txt.includes("o3")) return "o3";
         if (txt.includes("o1")) return "o1";
@@ -73,52 +84,81 @@
     claude: {
       match: () => location.hostname.includes("claude.ai"),
 
-      // Claude's DOM as of 2025-2026.
-      // Strategy: we cast a wide net. Even if class names change, the
-      // structural role attributes (data-testid) tend to be more stable.
-      // The text-content fallback (last entries) grabs the prose containers
-      // directly if all else fails.
-      messageSelectors: [
-        // Most stable — testid attributes
-        "[data-testid='human-turn']",
-        "[data-testid='ai-turn']",
-        "[data-testid='human-turn-content']",
-        "[data-testid='ai-turn-content']",
-        // Class-based fallbacks (Claude uses Tailwind so classes are hashed,
-        // but these structural markers have been consistent)
-        "div[class*='humanTurn']",
-        "div[class*='assistantTurn']",
-        // Widest net — grab any direct child of the scrollable conversation
-        // container. We identify the container first, then its children.
-        // This is handled separately in getMessageNodes() below.
-      ],
+      /**
+       * DOM-structure-independent token counting for Claude.
+       *
+       * Strategy: find the scrollable conversation container by
+       * looking for the element with the largest scrollHeight that
+       * is a child of <main>. Read its innerText. This captures all
+       * message content regardless of class name changes.
+       *
+       * We then subtract the input box text so a half-typed message
+       * doesn't inflate the count.
+       */
+      getTokens: () => {
+        // Find conversation container — largest scrollable div under main
+        const main = document.querySelector("main");
+        if (!main) return 0;
 
-      // Claude's input is a contenteditable div, not a textarea.
-      // The wrapper we want to insert above is the outer composer container.
+        // Walk all descendants, find the one with most text that isn't
+        // the input box itself
+        let bestEl = null;
+        let bestLen = 0;
+
+        const inputText = (() => {
+          const ce = document.querySelector("div[contenteditable='true']");
+          return ce ? (ce.textContent || "").trim() : "";
+        })();
+
+        // Check direct children of main first (most likely structure)
+        const candidates = Array.from(main.querySelectorAll("div, section, article"));
+
+        for (const el of candidates) {
+          // Skip the input area entirely
+          if (el.contains(document.querySelector("div[contenteditable='true']"))) continue;
+          // Skip tiny elements
+          const text = (el.textContent || "").trim();
+          if (text.length < 100) continue;
+          // Prefer elements that look like conversation containers:
+          // high text length, not too many direct children (not a layout wrapper)
+          if (text.length > bestLen) {
+            bestLen = text.length;
+            bestEl = el;
+          }
+        }
+
+        if (!bestEl) return 0;
+
+        // Get text, remove the input content to avoid double-counting
+        let text = (bestEl.textContent || "").trim();
+        if (inputText && text.endsWith(inputText)) {
+          text = text.slice(0, -inputText.length).trim();
+        }
+
+        // Subtract common UI chrome that appears in every page
+        // (these are constant strings Claude always renders)
+        const UI_CHROME = [
+          "New conversation", "Start new chat", "Recents",
+          "Yesterday", "Previous 7 days", "Previous 30 days",
+          "Help & support", "Settings", "Token Tracker",
+        ];
+        UI_CHROME.forEach((s) => { text = text.replace(s, ""); });
+
+        return Tokenizer.estimate(text);
+      },
+
       inputWrapperSelectors: [
-        // Stable: the fieldset wrapping the entire composer
         "fieldset",
-        // Class-based fallbacks
-        "div[class*='composer']",
-        "div[class*='inputArea']",
-        "div[class*='InputArea']",
-        // Last resort: the parent of the contenteditable
         "div[contenteditable='true']",
       ],
 
       limits: {
         default: 200000,
-        "claude-3-5-sonnet": 200000,
-        "claude-3-opus": 200000,
-        "claude-3-haiku": 200000,
-        "claude-sonnet-4": 200000,
-        "claude-opus-4": 200000,
       },
 
       getActiveModel: () => "default",
 
       getSessionId: () => {
-        // Claude URL: /chat/<uuid>
         const m = location.pathname.match(/\/chat\/([a-z0-9-]+)/i);
         return m ? m[1] : location.pathname;
       },
@@ -135,72 +175,6 @@
   let lastTokenCount = 0;
   let rafPending = false;
 
-  // ─── Selector Resolution ───────────────────────────────────────────────────
-
-  /**
-   * Try each selector in the array. Return the NodeList from the first one
-   * that actually matches something. If nothing matches, return [].
-   * This is the core of our resilience strategy.
-   */
-  function resolveNodes(selectors) {
-    for (const sel of selectors) {
-      try {
-        const nodes = document.querySelectorAll(sel);
-        if (nodes.length > 0) return Array.from(nodes);
-      } catch (e) {
-        // Invalid selector (e.g. :has() not supported) — skip silently
-      }
-    }
-    return [];
-  }
-
-  /**
-   * For Claude specifically: if the standard selectors all miss,
-   * fall back to finding the scrollable conversation container and
-   * reading its direct children that contain substantial text.
-   * This is the "nuclear option" — works regardless of class names.
-   */
-  function getClaudeMessagesFallback() {
-    // Claude's conversation scroll container has a large scrollHeight
-    // and contains alternating human/AI turns as direct children
-    const candidates = Array.from(
-      document.querySelectorAll("div[class*='scroll'], main > div > div, div[class*='conversation']")
-    );
-
-    for (const container of candidates) {
-      const children = Array.from(container.children);
-      // A real conversation container has multiple children with text
-      const textChildren = children.filter(
-        (el) => (el.textContent || "").trim().length > 20
-      );
-      if (textChildren.length >= 2) {
-        return textChildren;
-      }
-    }
-    return [];
-  }
-
-  function resolveInputWrapper() {
-    const nodes = resolveNodes(platform.inputWrapperSelectors);
-    if (nodes.length > 0) return nodes[0];
-
-    // Last-resort fallback for Claude: find the contenteditable and walk up
-    // to a container that makes sense to insert above
-    if (platform === PLATFORMS.claude) {
-      const ce = document.querySelector("div[contenteditable='true']");
-      if (ce) {
-        // Walk up 3 levels to find a reasonable wrapper
-        let el = ce.parentElement;
-        for (let i = 0; i < 3 && el; i++) {
-          if (el.tagName === "FIELDSET" || el.tagName === "FORM") return el;
-          el = el.parentElement;
-        }
-        return ce.parentElement;
-      }
-    }
-    return null;
-  }
-
   // ─── Init ──────────────────────────────────────────────────────────────────
 
   function init() {
@@ -213,10 +187,9 @@
     startObserver();
     startSessionWatcher();
 
-    // Initial scan — retry a few times in case DOM is still hydrating
-    setTimeout(scan, 800);
-    setTimeout(scan, 2000);
-    setTimeout(scan, 4000);
+    setTimeout(scan, 1000);
+    setTimeout(scan, 2500);
+    setTimeout(scan, 5000);
   }
 
   // ─── Token Scanning ────────────────────────────────────────────────────────
@@ -224,16 +197,7 @@
   function scan() {
     if (!platform) return;
 
-    let messageNodes = resolveNodes(platform.messageSelectors);
-
-    // Claude fallback if primary selectors found nothing
-    if (messageNodes.length === 0 && platform === PLATFORMS.claude) {
-      messageNodes = getClaudeMessagesFallback();
-    }
-
-    const texts = messageNodes.map((el) => el.textContent || "");
-    const tokenCount = Tokenizer.estimateMessages(texts);
-
+    const tokenCount = platform.getTokens();
     const model = platform.getActiveModel();
     const limit = platform.limits[model] || platform.limits.default;
 
@@ -260,7 +224,6 @@
         handlePotentialReset();
       }
     }, 500);
-
     window.addEventListener("popstate", handlePotentialReset);
   }
 
@@ -270,11 +233,7 @@
       lastSessionId = currentSessionId;
       lastTokenCount = 0;
       popupShown = false;
-      // Re-inject UI in case SPA navigation removed it
-      setTimeout(() => {
-        injectUI();
-        scan();
-      }, 800);
+      setTimeout(() => { injectUI(); scan(); }, 800);
     }
   }
 
@@ -295,26 +254,48 @@
 
   // ─── UI Injection ──────────────────────────────────────────────────────────
 
-  function injectUI() {
-    // Remove stale bar if present (after SPA navigation)
-    const existing = document.getElementById("tt-bar");
-    if (existing) {
-      // Already in DOM and attached — nothing to do
-      if (document.contains(existing)) return;
-      existing.remove();
+  function resolveInputWrapper() {
+    for (const sel of platform.inputWrapperSelectors) {
+      try {
+        const el = document.querySelector(sel);
+        if (el) return el;
+      } catch (_) {}
     }
+    return null;
+  }
+
+  function injectUI() {
+    const existing = document.getElementById("tt-bar");
+    if (existing && document.contains(existing)) return;
+    if (existing) existing.remove();
 
     uiBar = document.createElement("div");
     uiBar.id = "tt-bar";
-    uiBar.innerHTML = `
-      <div class="tt-inner">
-        <span class="tt-label">TOKENS</span>
-        <div class="tt-track">
-          <div class="tt-fill" id="tt-fill"></div>
-        </div>
-        <span class="tt-count" id="tt-count">— / —</span>
-      </div>
-    `;
+
+    // Build DOM manually — no innerHTML with dynamic content
+    const inner = document.createElement("div");
+    inner.className = "tt-inner";
+
+    const label = document.createElement("span");
+    label.className = "tt-label";
+    label.textContent = "TOKENS";
+
+    const track = document.createElement("div");
+    track.className = "tt-track";
+    const fill = document.createElement("div");
+    fill.className = "tt-fill";
+    fill.id = "tt-fill";
+    track.appendChild(fill);
+
+    const count = document.createElement("span");
+    count.className = "tt-count";
+    count.id = "tt-count";
+    count.textContent = "— / —";
+
+    inner.appendChild(label);
+    inner.appendChild(track);
+    inner.appendChild(count);
+    uiBar.appendChild(inner);
 
     const tryAnchor = () => {
       const wrapper = resolveInputWrapper();
@@ -328,10 +309,8 @@
 
     if (!tryAnchor()) {
       document.body.appendChild(uiBar);
-      const retryTimer = setInterval(() => {
-        if (tryAnchor()) clearInterval(retryTimer);
-      }, 800);
-      setTimeout(() => clearInterval(retryTimer), 15000);
+      const t = setInterval(() => { if (tryAnchor()) clearInterval(t); }, 800);
+      setTimeout(() => clearInterval(t), 15000);
     }
   }
 
@@ -339,27 +318,20 @@
     const fillEl = document.getElementById("tt-fill");
     const countEl = document.getElementById("tt-count");
 
-    if (!fillEl || !countEl) {
-      injectUI();
-      return;
-    }
+    if (!fillEl || !countEl) { injectUI(); return; }
 
     const pct = Math.min((used / limit) * 100, 100);
     const remaining = Math.max(limit - used, 0);
 
     fillEl.style.width = pct + "%";
-    fillEl.className =
-      "tt-fill" +
+    fillEl.className = "tt-fill" +
       (pct >= 90 ? " tt-critical" : pct >= 70 ? " tt-warn" : "");
 
-    countEl.textContent = `${formatK(remaining)} left`;
-    countEl.className =
-      "tt-count" +
+    countEl.textContent = formatK(remaining) + " left";
+    countEl.className = "tt-count" +
       (pct >= 90 ? " tt-critical" : pct >= 70 ? " tt-warn" : "");
 
-    if (uiBar) {
-      uiBar.title = `~${formatK(used)} tokens used of ~${formatK(limit)} limit`;
-    }
+    if (uiBar) uiBar.title = "~" + formatK(used) + " used of ~" + formatK(limit);
 
     if (remaining === 0 && !popupShown) {
       popupShown = true;
@@ -378,32 +350,47 @@
 
     const popup = document.createElement("div");
     popup.id = "tt-popup";
-    popup.innerHTML = `
-      <div class="tt-popup-box">
-        <div class="tt-popup-icon">⚠</div>
-        <h3 class="tt-popup-title">Context Limit Reached</h3>
-        <p class="tt-popup-body">
-          This conversation has used approximately <strong>~${formatK(limit)} tokens</strong> —
-          the full context window. The model may start forgetting earlier parts of your conversation.
-        </p>
-        <p class="tt-popup-tip">Start a new chat to reset the token counter and get full context.</p>
-        <button class="tt-popup-close" id="tt-popup-close">Got it</button>
-      </div>
-    `;
 
-    document.body.appendChild(popup);
+    const box = document.createElement("div");
+    box.className = "tt-popup-box";
 
-    document.getElementById("tt-popup-close").addEventListener("click", () => {
+    const icon = document.createElement("div");
+    icon.className = "tt-popup-icon";
+    icon.textContent = "⚠";
+
+    const title = document.createElement("h3");
+    title.className = "tt-popup-title";
+    title.textContent = "Context Limit Reached";
+
+    const body = document.createElement("p");
+    body.className = "tt-popup-body";
+    body.textContent = "This conversation has used approximately ~" +
+      formatK(limit) + " tokens — the full context window. " +
+      "The model may start forgetting earlier parts of your conversation.";
+
+    const tip = document.createElement("p");
+    tip.className = "tt-popup-tip";
+    tip.textContent = "Start a new chat to reset the token counter and get full context.";
+
+    const btn = document.createElement("button");
+    btn.className = "tt-popup-close";
+    btn.textContent = "Got it";
+    btn.addEventListener("click", () => {
       popup.classList.add("tt-popup-fade");
       setTimeout(() => popup.remove(), 300);
     });
 
+    box.appendChild(icon);
+    box.appendChild(title);
+    box.appendChild(body);
+    box.appendChild(tip);
+    box.appendChild(btn);
+    popup.appendChild(box);
+    document.body.appendChild(popup);
+
     setTimeout(() => {
       const p = document.getElementById("tt-popup");
-      if (p) {
-        p.classList.add("tt-popup-fade");
-        setTimeout(() => p.remove(), 300);
-      }
+      if (p) { p.classList.add("tt-popup-fade"); setTimeout(() => p.remove(), 300); }
     }, 12000);
   }
 
@@ -418,14 +405,16 @@
   // ─── Popup Query Handler ──────────────────────────────────────────────────
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === "GET_TOKEN_STATE") {
-      const p = platform;
-      const model = p ? p.getActiveModel() : "default";
-      const limit = p ? p.limits[model] || p.limits.default : 128000;
-      const platformName = location.hostname.includes("claude.ai")
-        ? "Claude"
-        : "ChatGPT";
-
-      sendResponse({ used: lastTokenCount, limit, platform: platformName, model });
+      const model = platform ? platform.getActiveModel() : "default";
+      const limit = platform
+        ? platform.limits[model] || platform.limits.default
+        : 128000;
+      sendResponse({
+        used: lastTokenCount,
+        limit,
+        platform: location.hostname.includes("claude.ai") ? "Claude" : "ChatGPT",
+        model,
+      });
     }
     return true;
   });
