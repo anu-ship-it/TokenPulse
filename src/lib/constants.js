@@ -1,0 +1,36 @@
+const TT_CONSTANTS = {
+  CLAUDE_API: {
+    ORGANIZATIONS: "/api/organizations",
+    USAGE:        (id) => `/api/organizations/${id}/usage`,
+    RATE_LIMITS:  (id) => `/api/organizations/${id}/rate_limits`,
+  },
+  CONTEXT_LIMITS: {
+    "default":         200000,
+    "claude-sonnet-4": 200000,
+    "claude-opus-4":   200000,
+    "claude-haiku-4":  200000,
+    "gpt-4o":          128000,
+    "gpt-4":           128000,
+    "gpt-3.5":         16385,
+    "o1":              200000,
+    "o3":              200000,
+  },
+  THRESHOLDS: { WARN: 70, DANGER: 90, CRITICAL: 100 },
+  COLORS: { GREEN: "#22c55e", YELLOW: "#f59e0b", RED: "#ef4444", DIM: "#1c1c1c" },
+  ALARMS: { FETCH_USAGE: "tt_fetch_usage", FETCH_INTERVAL_MINUTES: 5 },
+  STORAGE_KEYS: {
+    CLAUDE_ORG_ID:   "tt_claude_org_id",
+    CLAUDE_USAGE:    "tt_claude_usage",
+    CONTEXT:         "tt_context",
+    HISTORY:         "tt_history",
+    SETTINGS:        "tt_settings",
+    LAST_NOTIFIED:   "tt_last_notified",
+  },
+  DEFAULT_SETTINGS: {
+    notify_at_70: true,
+    notify_at_90: true,
+    notify_at_100: true,
+    refresh_minutes: 5,
+    show_context_bar: true,
+  },
+};

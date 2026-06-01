@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body>
+<canvas id="c" width="32" height="32"></canvas>
+<script src="constants.js"></script>
+<script>
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type !== "RENDER_ICON") return;
+
+  const canvas = document.getElementById("c");
+  const ctx    = canvas.getContext("2d");
+  const SIZE   = 32;
+  const cx = cy = SIZE / 2;
+
+  ctx.clearRect(0, 0, SIZE, SIZE);
+
+  // Background
+  ctx.beginPath();
+  ctx.arc(cx, cy, SIZE/2 - 1, 0, Math.PI*2);
+  ctx.fillStyle = "#111";
+  ctx.fill();
+
+  function color(pct) {
+    if (pct >= 90) return "#ef4444";
+    if (pct >= 70) return "#f59e0b";
+    return "#22c55e";
+  }
+
+  function ring(pct, radius, lw) {
+    const c     = color(pct);
+    const start = -Math.PI / 2;
+    const stub  = Math.max(pct / 100, 0.02);
+    const end   = start + stub * Math.PI * 2;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI*2);
+    ctx.strokeStyle = "#1c1c1c";
+    ctx.lineWidth   = lw;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, start, end);
+    ctx.strokeStyle = c;
+    ctx.lineWidth   = lw;
+    ctx.lineCap     = "round";
+    ctx.stroke();
+  }
+
+  ring(msg.outer || 0, 12, 4);
+  if (msg.inner > 0) ring(msg.inner, 6, 3);
+
+  const imgData = ctx.getImageData(0, 0, SIZE, SIZE);
+  chrome.runtime.sendMessage({
+    type:      "ICON_RENDERED",
+    imageData: Array.from(imgData.data),
+    width:     SIZE,
+    height:    SIZE,
+  });
+});
+</script>
+</body></html>
