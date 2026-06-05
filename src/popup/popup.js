@@ -208,7 +208,8 @@ function renderSettings(state) {
       <div class="section">
         <div class="section-title">Notifications</div>
         <div class="data-card">
-          ${toggleRow("n70",  "Alert at 70%",  "Early warning",    s.notify_70)}
+          ${toggleRow("n50",  "Alert at 50%",  "Early warning",    s.notify_50)}
+          ${toggleRow("n75",  "Alert at 75%",  "Early warning",    s.notify_75)}
           ${toggleRow("n90",  "Alert at 90%",  "Critical warning", s.notify_90)}
           ${toggleRow("n100", "Alert at 100%", "Limit reached",    s.notify_100)}
         </div>
@@ -250,10 +251,11 @@ function renderSettings(state) {
 
     document.getElementById("save-btn").addEventListener("click", async () => {
       const settings = {
-        notify_70:       document.getElementById("n70").checked,
-        notify_90:       document.getElementById("n90").checked,
-        notify_100:      document.getElementById("n100").checked,
-        show_bar:        document.getElementById("show_bar").checked,
+        notify_50:  document.getElementById("n50").checked,
+        notify_75:  document.getElementById("n75").checked,
+        notify_90:  document.getElementById("n90").checked,
+        notify_100: document.getElementById("n100").checked,
+        show_bar:   document.getElementById("show_bar").checked,
         refresh_minutes: parseInt(document.getElementById("refresh").value, 10),
       };
 

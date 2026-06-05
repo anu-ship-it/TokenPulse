@@ -1,7 +1,3 @@
-/**
- * service-worker.js
- */
-
 importScripts(
   "../lib/constants.js",
   "../lib/storage.js"
@@ -28,7 +24,7 @@ async function setupAlarm() {
 }
 
 // ── Alarm ──────────────────────────────────────────────────────────
-chrome.alarms.onAlarm.addListener(async (alarm) => {
+chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name !== TT.ALARM) return;
   triggerUsageFetch();
 });
@@ -49,7 +45,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case "CLAUDE_USAGE_RESULT": {
         if (msg.usage) {
           await Storage.saveUsage(msg.usage);
-          await checkNotifications(msg.usage);
+          await checkRateLimitNotifications(msg.usage);
         }
         break;
       }
@@ -89,72 +85,101 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   return true;
 });
 
-// ── Notification helper ────────────────────────────────────────────
-function notify(id, title, message) {
+// ── Notification core ──────────────────────────────────────────────
+const THRESHOLDS = [50, 75, 90, 100];
+
+function notify(id, title, message, priority) {
   chrome.notifications.create(id, {
-    type:    "basic",
-    title:    "Test",
-    message:   "Notifications working",
-    iconUrl: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+    type:     "basic",
+    title,
+    message,
+    priority: priority || 1,
+    iconUrl:  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
   });
 }
 
-// ── Claude rate limit notifications ───────────────────────────────
-async function checkNotifications(usage) {
-  const settings     = await Storage.getSettings();
+/**
+ * Threshold tracker — only notifies when crossing a NEW higher threshold.
+ * Resets when usage drops below the lowest threshold.
+ * Key is stored per notification type so rate limits and context
+ * windows track independently.
+ */
+async function shouldNotify(stateKey, currentPct, settings) {
+  // Check which thresholds are enabled
+  const enabledThresholds = THRESHOLDS.filter(t => {
+    if (t === 50)  return settings.notify_50;
+    if (t === 75)  return settings.notify_75;
+    if (t === 90)  return settings.notify_90;
+    if (t === 100) return settings.notify_100;
+    return false;
+  });
+
+  if (enabledThresholds.length === 0) return null;
+
+  // Find highest threshold crossed
+  const crossed = enabledThresholds.filter(t => currentPct >= t).pop() || 0;
+
+  // Get last notified threshold for this key
   const lastNotified = await Storage.getLastNotified();
-  const now          = Date.now();
-  const COOLDOWN     = 30 * 60 * 1000;
+  const lastThreshold = lastNotified[stateKey] || 0;
 
-  const highestPct = Math.max(
-    usage.five_hour?.utilization || 0,
-    usage.seven_day?.utilization || 0
-  );
-
-  const checks = [
-    { key: "100", threshold: 100, enabled: settings.notify_100, title: "Token limit reached",      body: "You've hit your Claude usage limit." },
-    { key: "90",  threshold: 90,  enabled: settings.notify_90,  title: "Approaching limit — 90%",  body: "Claude usage is at 90%. Consider a new session." },
-    { key: "75",  threshold: 75,  enabled: settings.notify_75,  title: "Token usage at 75%",       body: "Claude usage is at 75%." },
-    { key: "50",  threshold: 50,  enabled: settings.notify_50,  title: "Halfway through — 50%",    body: "Claude usage is at 50%." },
-  ];
-
-  for (const check of checks) {
-    if (!check.enabled) continue;
-    if (highestPct < check.threshold) continue;
-    if (lastNotified[check.key] && now - lastNotified[check.key] < COOLDOWN) continue;
-
-    notify(`tt_rate_${check.key}`, check.title, check.body);
-    lastNotified[check.key] = now;
+  // Reset if usage dropped below lowest enabled threshold
+  if (crossed === 0 && lastThreshold > 0) {
+    lastNotified[stateKey] = 0;
     await Storage.saveLastNotified(lastNotified);
-    break;
+    return null;
   }
+
+  // Only notify if we crossed a NEW higher threshold
+  if (crossed <= 0 || crossed <= lastThreshold) return null;
+
+  // Save new threshold
+  lastNotified[stateKey] = crossed;
+  await Storage.saveLastNotified(lastNotified);
+
+  return crossed;
+}
+
+// ── Claude rate limit notifications ───────────────────────────────
+async function checkRateLimitNotifications(usage) {
+  const settings   = await Storage.getSettings();
+  const sessionPct = usage.five_hour?.utilization || 0;
+  const weeklyPct  = usage.seven_day?.utilization  || 0;
+  const maxPct     = Math.max(sessionPct, weeklyPct);
+
+  const threshold = await shouldNotify("claude_rate", maxPct, settings);
+  if (!threshold) return;
+
+  const isSession  = sessionPct >= weeklyPct;
+  const pct        = Math.round(isSession ? sessionPct : weeklyPct);
+  const limitType  = isSession ? "5-hour session" : "7-day weekly";
+  const priority   = threshold >= 90 ? 2 : 1;
+
+  notify(
+    `tt_rate_${threshold}`,
+    `Claude usage at ${pct}%`,
+    `Your ${limitType} limit has reached ${pct}%. ${threshold >= 90 ? "Consider starting a new session." : ""}`,
+    priority
+  );
 }
 
 // ── Context window notifications (both platforms) ─────────────────
 async function checkContextNotifications(platform, used, limit) {
   if (!used || !limit) return;
-  const settings     = await Storage.getSettings();
-  const lastNotified = await Storage.getLastNotified();
-  const now          = Date.now();
-  const COOLDOWN     = 30 * 60 * 1000;
-  const pct          = Math.round((used / limit) * 100);
-  const name         = platform === "claude" ? "Claude" : "ChatGPT";
+  const settings = await Storage.getSettings();
+  const pct      = Math.round((used / limit) * 100);
+  const name     = platform === "claude" ? "Claude" : "ChatGPT";
 
-  const checks = [
-    { key: `ctx_${platform}_100`, threshold: 100, enabled: settings.notify_100, title: `${name} context full`,       body: "Context window is full. Start a new chat." },
-    { key: `ctx_${platform}_90`,  threshold: 90,  enabled: settings.notify_90,  title: `${name} context at 90%`,    body: `${name} context window is 90% full.` },
-    { key: `ctx_${platform}_75`,  threshold: 75,  enabled: settings.notify_75,  title: `${name} context at 75%`,    body: `${name} context window is 75% full.` },
-    { key: `ctx_${platform}_50`,  threshold: 50,  enabled: settings.notify_50,  title: `${name} context at 50%`,    body: `${name} context window is halfway full.` },
-  ];
+  const threshold = await shouldNotify(`ctx_${platform}`, pct, settings);
+  if (!threshold) return;
 
-  for (const check of checks) {
-    if (!check.enabled) continue;
-    if (pct < check.threshold) continue;
-    if (lastNotified[check.key] && now - lastNotified[check.key] < COOLDOWN) continue;
+  const remaining = Math.round(((limit - used) / 1000));
+  const priority  = threshold >= 90 ? 2 : 1;
 
-    notify(check.key, check.title, check.body);
-    lastNotified[check.key] = now;
-    await Storage.saveLastNotified(lastNotified);
-    break;
-  }
+  notify(
+    `tt_ctx_${platform}_${threshold}`,
+    `${name} context at ${threshold}%`,
+    `~${remaining}k tokens remaining in this conversation. ${threshold >= 90 ? "Start a new chat to reset context." : threshold === 100 ? "Context window full." : ""}`,
+    priority
+  );
 }
