@@ -131,15 +131,15 @@ function renderMain(state) {
     <div class="hd">
       <div class="hd-left">
         <div class="logo">
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-    <circle cx="9" cy="9" r="7" stroke="#0d3d42" stroke-width="2"/>
-    <path d="M9 2 a7 7 0 0 1 6.06 3.5" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
-    <circle cx="9" cy="9" r="4" stroke="#0d3d42" stroke-width="1.5"/>
-    <path d="M9 5 a4 4 0 0 1 3.46 2 a4 4 0 0 1 0 4" stroke="#67e8f9" stroke-width="1.5" stroke-linecap="round"/>
-    <text x="9" y="12.5" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="7" font-weight="800" fill="white">T</text>
-  </svg>
-</div>
-        <span class="app-name">Token Tracker</span>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="7" stroke="#0d3d42" stroke-width="2"/>
+            <path d="M9 2 a7 7 0 0 1 6.06 3.5" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="9" cy="9" r="4" stroke="#0d3d42" stroke-width="1.5"/>
+            <path d="M9 5 a4 4 0 0 1 3.46 2 a4 4 0 0 1 0 4" stroke="#67e8f9" stroke-width="1.5" stroke-linecap="round"/>
+            <text x="9" y="12.5" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="7" font-weight="800" fill="white">T</text>
+          </svg>
+        </div>
+        <span class="app-name">TokenPulse</span>
       </div>
       <div class="hd-right">
         <div class="dot" style="background:${heroColor};box-shadow:0 0 6px ${heroColor}66"></div>
@@ -305,7 +305,7 @@ function renderEmpty() {
     <text x="9" y="12.5" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="7" font-weight="800" fill="white">T</text>
   </svg>
 </div>
-        <span class="app-name">Token Tracker</span>
+        <span class="app-name">TokenPulse</span>
       </div>
       <div class="hd-right">
         <span class="badge badge-none">—</span>
