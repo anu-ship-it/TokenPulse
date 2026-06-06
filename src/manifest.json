@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Token Tracker — ChatGPT & Claude",
+  "name": "TokenPulse — ChatGPT & Claude Tracker",
   "version": "2.0.0",
-  "description": "Live token & rate limit tracker for ChatGPT and Claude.",
+  "description": "Live token & rate limit tracker for ChatGPT and Claude. Context window bar, usage rings, notifications.",
   "permissions": [
     "storage",
     "alarms",
@@ -31,7 +31,7 @@
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Token Tracker",
+    "default_title": "TokenPulse",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

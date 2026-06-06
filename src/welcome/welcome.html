@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Welcome — Token Tracker</title>
+  <title>Welcome — TokenPulse</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #0a0a0a; color: #f0f0f0;
+      background: #030f10; color: #f0f0f0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       -webkit-font-smoothing: antialiased;
       min-height: 100vh; display: flex;
@@ -15,91 +15,92 @@
     }
     .card {
       width: 100%; max-width: 400px;
-      background: #0e0e0e; border: 1px solid #161616;
-      border-radius: 18px; padding: 36px 32px;
+      background: #021c1e; border: 1px solid #0d3d42;
+      border-radius: 20px; padding: 40px 32px;
       text-align: center;
     }
     .logo {
-      width: 52px; height: 52px; border-radius: 14px;
-      background: linear-gradient(135deg, #22c55e, #15803d);
+      width: 64px; height: 64px; border-radius: 18px;
+      background: #021c1e; border: 2px solid #0d3d42;
       display: flex; align-items: center; justify-content: center;
-      font-size: 24px; font-weight: 800; color: #fff;
-      margin: 0 auto 18px;
+      margin: 0 auto 20px; position: relative;
+      overflow: hidden;
     }
-    h1 { font-size: 20px; font-weight: 700; color: #d0d0d0; margin-bottom: 6px; }
-    .sub { font-size: 12px; color: #333; line-height: 1.6; margin-bottom: 26px; }
+    .logo svg { width: 48px; height: 48px; }
+    h1 { font-size: 22px; font-weight: 700; color: #e0f7fa; margin-bottom: 6px; }
+    .sub { font-size: 12px; color: #2a6b72; line-height: 1.6; margin-bottom: 26px; }
 
     .platforms {
       display: flex; gap: 8px; margin-bottom: 26px;
     }
     .plat {
       flex: 1; padding: 10px 8px;
-      border-radius: 8px; border: 1px solid #161616;
+      border-radius: 8px; border: 1px solid #0d3d42;
       font-size: 12px; font-weight: 600;
+      color: #06b6d4; background: rgba(6,182,212,.06);
     }
-    .plat.claude  { color: #e8894a; background: rgba(232,137,74,.06); }
-    .plat.chatgpt { color: #19c37d; background: rgba(25,195,125,.06); }
 
     .steps { text-align: left; margin-bottom: 26px; display: flex; flex-direction: column; gap: 12px; }
     .step  { display: flex; align-items: flex-start; gap: 10px; }
     .num {
       width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
-      background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.2);
-      color: #22c55e; font-size: 10px; font-weight: 700;
+      background: rgba(6,182,212,.08); border: 1px solid rgba(6,182,212,.2);
+      color: #06b6d4; font-size: 10px; font-weight: 700;
       display: flex; align-items: center; justify-content: center;
       margin-top: 1px;
     }
-    .step-text { font-size: 12px; color: #555; line-height: 1.55; }
-    .step-text strong { color: #999; }
+    .step-text { font-size: 12px; color: #2a6b72; line-height: 1.55; }
+    .step-text strong { color: #67e8f9; }
 
     .cta {
       width: 100%; padding: 13px;
-      background: #22c55e; color: #000;
+      background: #06b6d4; color: #021c1e;
       border: none; border-radius: 10px;
       font-size: 13px; font-weight: 700;
       cursor: pointer; font-family: inherit;
       transition: opacity .15s;
     }
     .cta:hover { opacity: .85; }
-    .note { font-size: 10px; color: #1e1e1e; margin-top: 12px; line-height: 1.6; }
+    .note { font-size: 10px; color: #0d3d42; margin-top: 12px; line-height: 1.6; }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="logo">T</div>
-    <h1>Token Tracker</h1>
+    <div class="logo">
+      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="24" r="20" stroke="#0d3d42" stroke-width="4"/>
+        <path d="M24 4 a20 20 0 0 1 17.3 10" stroke="#06b6d4" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="24" cy="24" r="13" stroke="#0d3d42" stroke-width="3.5"/>
+        <path d="M24 11 a13 13 0 0 1 11.3 6.5 a13 13 0 0 1 0 13" stroke="#67e8f9" stroke-width="3.5" stroke-linecap="round"/>
+        <text x="24" y="29" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" font-weight="800" fill="white">T</text>
+      </svg>
+    </div>
+    <h1>TokenPulse</h1>
     <p class="sub">Context window and rate limit tracking for Claude and ChatGPT.</p>
 
     <div class="platforms">
-      <div class="plat claude">◎ Claude</div>
-      <div class="plat chatgpt">◎ ChatGPT</div>
+      <div class="plat">◎ Claude</div>
+      <div class="plat">◎ ChatGPT</div>
     </div>
 
     <div class="steps">
       <div class="step">
         <div class="num">1</div>
-        <div class="step-text">
-          <strong>Pin the extension</strong> to your toolbar — the icon is always visible without opening the popup.
-        </div>
+        <div class="step-text"><strong>Pin the extension</strong> to your toolbar — the dual-ring icon shows usage at a glance.</div>
       </div>
       <div class="step">
         <div class="num">2</div>
-        <div class="step-text">
-          <strong>Open Claude or ChatGPT</strong> — a live token bar appears above the input box tracking your context window.
-        </div>
+        <div class="step-text"><strong>Open Claude or ChatGPT</strong> — a live token bar appears above the input box.</div>
       </div>
       <div class="step">
         <div class="num">3</div>
-        <div class="step-text">
-          <strong>Click the icon</strong> to see context usage, Claude's 5-hour and 7-day rate limits, and reset countdowns.
-        </div>
+        <div class="step-text"><strong>Click the icon</strong> to see context usage, Claude rate limits, reset countdowns, and daily history.</div>
       </div>
     </div>
 
     <button class="cta" id="start-btn">Get Started</button>
     <p class="note">All data stays on your device. No servers, no accounts, no tracking.</p>
   </div>
-
   <script>
     document.getElementById("start-btn").addEventListener("click", () => window.close());
   </script>
