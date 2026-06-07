@@ -4,7 +4,7 @@ importScripts(
 );
 
 // Notification icon — green square, no file dependency
-const ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAuUlEQVR42u3ZUQqEMAwEUM+yB/O2nmv3SxDxw7aTSTI7gX4a5oGgTbbN5XKF1ufYv22Cjp62wUtAEMFTIBHBaRBG+DAEMzwckREehsgMD0GcTdgFAVybZAKmEa0B9wbZgGFEa8DTwxUArxGSgJEzEwz6TTDAgAUA4t8lEkBB+BUywAAD1m9nFQG0u3AJwAoiAkCdSJQBzCLQAPpcqBSg/WROYjYqMZ2W2A9IbGhkdmQyW0qZPbHrX+sHzlo+ECwx5L4AAAAASUVORK5CYII=";
+const ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABIUlEQVR42u3awRHCIBAFUMaDVTi2Z4dWkiJswZOOB28k/L/8ZReFGc75L8AmkJSyWimny/W118/3bbenDo4AwiBIcAYwDMIEtwBcIZbwKUZDETxsfShC3h7Pbkjonf8Aat0d4Q1gIWHzvgWoQboQ6oWKAmQIz6rDTika4B0ehZhHYSQArVIwICL8EYKeSpGAFqIJ6Llwb5OMQgZA1ygsgAhQQ/wMoIZwrUCtoGg1mh5wNI0WYE2hfwK4lVElIORBtgDgy1wN4vo67QX49qk2NBAg65YSDm8FoHfMsqmnARYEe3H2pI4KzwKYQyv2YMsMQBFpw7MjMSI4HV6xFlTBzQBFWbWGlYTPcuA1xbcy1+ARiJTfi1ME94JM8c9EyuAZ2hsPB2OJfY4DKQAAAABJRU5ErkJggg==";
 
 // ── Install ────────────────────────────────────────────────────────
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
