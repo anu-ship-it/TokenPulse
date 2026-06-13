@@ -56,6 +56,22 @@ function dayLabel(dateStr) {
   });
 }
 
+function bindHeaderButtons(state) {
+  const tipsBtn     = document.getElementById("tips-btn");
+  const refreshBtn  = document.getElementById("refresh-btn");
+  const settingsBtn = document.getElementById("settings-btn");
+  const backBtn     = document.getElementById("back-btn");
+
+  if (tipsBtn)     tipsBtn.addEventListener("click", () => renderTips(state));
+  if (refreshBtn)  refreshBtn.addEventListener("click", () => {
+    refreshBtn.classList.add("spin");
+    chrome.runtime.sendMessage({ type: "FORCE_REFRESH" });
+    setTimeout(() => location.reload(), 1500);
+  });
+  if (settingsBtn) settingsBtn.addEventListener("click", () => renderSettings(state));
+  if (backBtn)     backBtn.addEventListener("click", () => renderMain(state));
+}
+
 // ── Tips content ───────────────────────────────────────────────────
 const TIPS = {
   claude: [
@@ -277,13 +293,7 @@ function renderMain(state) {
     </div>
   `;
 
-  document.getElementById("tips-btn").addEventListener("click", () => renderTips(state));
-  document.getElementById("refresh-btn").addEventListener("click", () => {
-    document.getElementById("refresh-btn").classList.add("spin");
-    chrome.runtime.sendMessage({ type: "FORCE_REFRESH" });
-    setTimeout(() => location.reload(), 1500);
-  });
-  document.getElementById("settings-btn").addEventListener("click", () => renderSettings(state));
+  document.getAnimations("new-chat-btn").addEventListener(bindHeaderButtons(state));
   document.getElementById("new-chat-btn").addEventListener("click", () => {
     chrome.tabs.update({ url: isClaude ? "https://claude.ai/new" : "https://chatgpt.com/" });
     window.close();
@@ -329,8 +339,7 @@ function renderTips(state) {
     </div>
   `;
 
-  document.getElementById("back-btn").addEventListener("click", () => renderMain(state));
-  document.getElementById("more-tips-btn").addEventListener("click", () => renderTips(state));
+  document.getAnimations("new-chat-btn").addEventListener(bindHeaderButtons(state));
 
   // Copy prompt buttons
   document.querySelectorAll(".tip-copy-btn").forEach(btn => {
@@ -410,7 +419,7 @@ function renderSettings(state) {
       </div>
     `;
 
-    document.getElementById("back-btn").addEventListener("click", () => renderMain(state));
+    document.getAnimations("new-chat-btn").addEventListener(bindHeaderButtons(state));
 
     document.getElementById("save-btn").addEventListener("click", async () => {
       const settings = {
