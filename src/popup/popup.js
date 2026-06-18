@@ -13,27 +13,27 @@ function safePct(used, limit) {
   if (!limit || used === undefined) return 0;
   const raw = (used / limit) * 100;
   if (raw <= 0) return 0;
-  if (raw < 1)  return 1;
+  if (raw < 1) return 1;
   return Math.min(Math.round(raw), 100);
 }
 
 function colorFor(pct) {
   if (pct >= TT.DANGER) return TT.COLOR.RED;
-  if (pct >= TT.WARN)   return TT.COLOR.YELLOW;
+  if (pct >= TT.WARN) return TT.COLOR.YELLOW;
   return TT.COLOR.GREEN;
 }
 
 function colorClass(pct) {
   if (pct >= TT.DANGER) return "red";
-  if (pct >= TT.WARN)   return "yellow";
+  if (pct >= TT.WARN) return "yellow";
   return "green";
 }
 
 function statusLabel(pct) {
-  if (pct >= 100)       return "MAXED OUT";
+  if (pct >= 100) return "MAXED OUT";
   if (pct >= TT.DANGER) return "CRITICAL";
-  if (pct >= TT.WARN)   return "WARNING";
-  if (pct >= 1)         return "HEALTHY";
+  if (pct >= TT.WARN) return "WARNING";
+  if (pct >= 1) return "HEALTHY";
   return "IDLE";
 }
 
@@ -47,9 +47,9 @@ function countdown(resetsAt) {
 }
 
 function dayLabel(dateStr) {
-  const today     = new Date().toDateString();
+  const today = new Date().toDateString();
   const yesterday = new Date(Date.now() - 86400000).toDateString();
-  if (dateStr === today)     return "Today";
+  if (dateStr === today) return "Today";
   if (dateStr === yesterday) return "Yesterday";
   return new Date(dateStr).toLocaleDateString(undefined, {
     weekday: "short", month: "short", day: "numeric"
@@ -57,19 +57,19 @@ function dayLabel(dateStr) {
 }
 
 function bindHeaderButtons(state) {
-  const tipsBtn     = document.getElementById("tips-btn");
-  const refreshBtn  = document.getElementById("refresh-btn");
+  const tipsBtn = document.getElementById("tips-btn");
+  const refreshBtn = document.getElementById("refresh-btn");
   const settingsBtn = document.getElementById("settings-btn");
-  const backBtn     = document.getElementById("back-btn");
+  const backBtn = document.getElementById("back-btn");
 
-  if (tipsBtn)     tipsBtn.addEventListener("click", () => renderTips(state));
-  if (refreshBtn)  refreshBtn.addEventListener("click", () => {
+  if (tipsBtn) tipsBtn.addEventListener("click", () => renderTips(state));
+  if (refreshBtn) refreshBtn.addEventListener("click", () => {
     refreshBtn.classList.add("spin");
     chrome.runtime.sendMessage({ type: "FORCE_REFRESH" });
     setTimeout(() => location.reload(), 1500);
   });
   if (settingsBtn) settingsBtn.addEventListener("click", () => renderSettings(state));
-  if (backBtn)     backBtn.addEventListener("click", () => renderMain(state));
+  if (backBtn) backBtn.addEventListener("click", () => renderMain(state));
 }
 
 // ── Tips content ───────────────────────────────────────────────────
@@ -177,7 +177,7 @@ function rateLimitsHTML(usage) {
       <div class="section-title">Rate Limits</div>
       <div class="data-card">
         ${dataRow("5-Hour Session", countdown(usage.five_hour?.resets_at), fhPct)}
-        ${dataRow("7-Day Weekly",   countdown(usage.seven_day?.resets_at), sdPct)}
+        ${dataRow("7-Day Weekly", countdown(usage.seven_day?.resets_at), sdPct)}
       </div>
     </div>`;
 }
@@ -191,10 +191,10 @@ function dailyHistoryHTML(history, platform) {
   const rows = days.length === 0
     ? `<div class="no-history">No usage recorded yet.<br>Data saves automatically as you chat.</div>`
     : days.map(d => dataRow(
-        dayLabel(d.date),
-        `Peak ~${fk(d.used)} of ${fk(d.limit)} tokens`,
-        safePct(d.used, d.limit)
-      )).join("");
+      dayLabel(d.date),
+      `Peak ~${fk(d.used)} of ${fk(d.limit)} tokens`,
+      safePct(d.used, d.limit)
+    )).join("");
 
   return `
     <div class="section">
@@ -205,7 +205,7 @@ function dailyHistoryHTML(history, platform) {
 
 // ── Header builder (shared across views) ──────────────────────────
 function headerHTML(badgeClass, badgeLabel, heroColor, showBack, activeIcon) {
-  const backBtn   = showBack
+  const backBtn = showBack
     ? `<button class="icon-btn" id="back-btn" style="font-size:13px;color:#2a6b72">←</button>`
     : "";
   const logoOrBack = showBack ? backBtn : `
@@ -238,15 +238,32 @@ function headerHTML(badgeClass, badgeLabel, heroColor, showBack, activeIcon) {
     </div>`;
 }
 
+function bindHeaderButtons(state) {
+  const tipsBtn = document.getElementById("tips-btn");
+  const refreshBtn = document.getElementById("refresh-btn");
+  const settingsBtn = document.getElementById("settings-btn");
+  const backBtn = document.getElementById("back-btn");
+
+  if (tipsBtn) tipsBtn.addEventListener("click", () => renderTips(state));
+  if (refreshBtn) refreshBtn.addEventListener("click", () => {
+    refreshBtn.classList.add("spin");
+    chrome.runtime.sendMessage({ type: "FORCE_REFRESH" });
+    setTimeout(() => location.reload(), 1500);
+  });
+  if (settingsBtn) settingsBtn.addEventListener("click", () => renderSettings(state));
+  if (backBtn) backBtn.addEventListener("click", () => renderMain(state));
+}
+
+
 // ── Main view ──────────────────────────────────────────────────────
 function renderMain(state) {
   const { usage, context, history, platform } = state;
-  const root     = document.getElementById("root");
+  const root = document.getElementById("root");
   const isClaude = platform === "claude";
-  const ctx      = context?.[platform] || {};
-  const used     = ctx.used  || 0;
-  const limit    = ctx.limit || (isClaude ? TT.LIMITS["default"] : TT.LIMITS["gpt-4o"]);
-  const ctxPct   = safePct(used, limit);
+  const ctx = context?.[platform] || {};
+  const used = ctx.used || 0;
+  const limit = ctx.limit || (isClaude ? TT.LIMITS["default"] : TT.LIMITS["gpt-4o"]);
+  const ctxPct = safePct(used, limit);
   const ctxColor = colorFor(ctxPct);
 
   const badgeClass = isClaude ? "badge-claude" : platform === "chatgpt" ? "badge-chatgpt" : "badge-none";
@@ -293,7 +310,7 @@ function renderMain(state) {
     </div>
   `;
 
-  document.getAnimations("new-chat-btn").addEventListener(bindHeaderButtons(state));
+  bindHeaderButtons(state);
   document.getElementById("new-chat-btn").addEventListener("click", () => {
     chrome.tabs.update({ url: isClaude ? "https://claude.ai/new" : "https://chatgpt.com/" });
     window.close();
@@ -302,12 +319,12 @@ function renderMain(state) {
 
 // ── Tips view ──────────────────────────────────────────────────────
 function renderTips(state) {
-  const root      = document.getElementById("root");
-  const platform  = state.platform;
-  const isClaude  = platform === "claude";
+  const root = document.getElementById("root");
+  const platform = state.platform;
+  const isClaude = platform === "claude";
   const badgeClass = isClaude ? "badge-claude" : "badge-chatgpt";
   const badgeLabel = isClaude ? "Claude" : "ChatGPT";
-  const tips       = getRandomTips(platform);
+  const tips = getRandomTips(platform);
 
   root.innerHTML = `
     ${headerHTML(badgeClass, badgeLabel, TT.COLOR.GREEN, true, "tips")}
@@ -339,13 +356,17 @@ function renderTips(state) {
     </div>
   `;
 
-  document.getAnimations("new-chat-btn").addEventListener(bindHeaderButtons(state));
+  bindHeaderButtons(state);
+
+  document.getElementById("more-tips-btn").addEventListener("click", () => renderTips(state));
+
+  // Copy prompt buttons
 
   // Copy prompt buttons
   document.querySelectorAll(".tip-copy-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      const idx    = btn.dataset.idx;
-      const text   = document.getElementById(`tp-${idx}`).textContent;
+      const idx = btn.dataset.idx;
+      const text = document.getElementById(`tp-${idx}`).textContent;
       navigator.clipboard.writeText(text).then(() => {
         btn.textContent = "Copied!";
         setTimeout(() => { btn.textContent = "Copy"; }, 1500);
@@ -356,8 +377,8 @@ function renderTips(state) {
 
 // ── Settings view ──────────────────────────────────────────────────
 function renderSettings(state) {
-  const root      = document.getElementById("root");
-  const isClaude  = state.platform === "claude";
+  const root = document.getElementById("root");
+  const isClaude = state.platform === "claude";
   const badgeClass = isClaude ? "badge-claude" : "badge-chatgpt";
   const badgeLabel = isClaude ? "Claude" : "ChatGPT";
 
@@ -370,10 +391,10 @@ function renderSettings(state) {
       <div class="section">
         <div class="section-title">Notifications</div>
         <div class="data-card">
-          ${toggleRow("n50",  "Alert at 50%",  "Halfway warning",   s.notify_50)}
-          ${toggleRow("n75",  "Alert at 75%",  "Last call warning", s.notify_75)}
-          ${toggleRow("n90",  "Alert at 90%",  "Critical warning",  s.notify_90)}
-          ${toggleRow("n100", "Alert at 100%", "Limit reached",     s.notify_100)}
+          ${toggleRow("n50", "Alert at 50%", "Halfway warning", s.notify_50)}
+          ${toggleRow("n75", "Alert at 75%", "Last call warning", s.notify_75)}
+          ${toggleRow("n90", "Alert at 90%", "Critical warning", s.notify_90)}
+          ${toggleRow("n100", "Alert at 100%", "Limit reached", s.notify_100)}
         </div>
       </div>
 
@@ -393,9 +414,9 @@ function renderSettings(state) {
               <div class="data-sub">Background refresh frequency</div>
             </div>
             <select id="refresh" class="sel">
-              <option value="1"  ${s.refresh_minutes === 1  ? "selected" : ""}>1 min</option>
-              <option value="2"  ${s.refresh_minutes === 2  ? "selected" : ""}>2 min</option>
-              <option value="5"  ${s.refresh_minutes === 5  ? "selected" : ""}>5 min</option>
+              <option value="1"  ${s.refresh_minutes === 1 ? "selected" : ""}>1 min</option>
+              <option value="2"  ${s.refresh_minutes === 2 ? "selected" : ""}>2 min</option>
+              <option value="5"  ${s.refresh_minutes === 5 ? "selected" : ""}>5 min</option>
               <option value="10" ${s.refresh_minutes === 10 ? "selected" : ""}>10 min</option>
               <option value="15" ${s.refresh_minutes === 15 ? "selected" : ""}>15 min</option>
             </select>
@@ -419,15 +440,15 @@ function renderSettings(state) {
       </div>
     `;
 
-    document.getAnimations("new-chat-btn").addEventListener(bindHeaderButtons(state));
+    bindHeaderButtons(state);
 
     document.getElementById("save-btn").addEventListener("click", async () => {
       const settings = {
-        notify_50:       document.getElementById("n50").checked,
-        notify_75:       document.getElementById("n75").checked,
-        notify_90:       document.getElementById("n90").checked,
-        notify_100:      document.getElementById("n100").checked,
-        show_bar:        document.getElementById("show_bar").checked,
+        notify_50: document.getElementById("n50").checked,
+        notify_75: document.getElementById("n75").checked,
+        notify_90: document.getElementById("n90").checked,
+        notify_100: document.getElementById("n100").checked,
+        show_bar: document.getElementById("show_bar").checked,
         refresh_minutes: parseInt(document.getElementById("refresh").value, 10),
       };
       await chrome.runtime.sendMessage({ type: "SAVE_SETTINGS", settings });
@@ -488,26 +509,26 @@ function renderEmpty() {
 // ── Init ───────────────────────────────────────────────────────────
 async function init() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const url   = tab?.url || "";
-  const ok    = SUPPORTED.some(s => url.includes(s));
+  const url = tab?.url || "";
+  const ok = SUPPORTED.some(s => url.includes(s));
 
   if (!ok) { renderEmpty(); return; }
 
   const platform = url.includes("claude.ai") ? "claude" : "chatgpt";
-  const data     = await chrome.runtime.sendMessage({ type: "GET_ALL_DATA" });
+  const data = await chrome.runtime.sendMessage({ type: "GET_ALL_DATA" });
 
   try {
     const live = await chrome.tabs.sendMessage(tab.id, { type: "GET_CONTEXT_STATE" });
     if (live?.used !== undefined) {
-      data.context           = data.context || {};
+      data.context = data.context || {};
       data.context[platform] = { used: live.used, limit: live.limit };
     }
-  } catch (_) {}
+  } catch (_) { }
 
   renderMain({
-    usage:    data.usage,
-    context:  data.context || {},
-    history:  data.history || [],
+    usage: data.usage,
+    context: data.context || {},
+    history: data.history || [],
     platform,
   });
 }
