@@ -56,6 +56,26 @@ function dayLabel(dateStr) {
   });
 }
 
+function fmtCost(usd) {
+  if (!usd || usd <= 0) return "$0.00";
+  if (usd < 0.001) return "<$0.001";
+  if (usd < 0.01) return "$" + usd.toFixed(4);
+  if (usd < 1) return "$" + usd.toFixed(3);
+  return "$" + usd.toFixed(2);
+}
+
+const MODEL_LABELS = {
+  "claude-sonnet-4": "Sonnet 4",
+  "claude-opus-4": "Opus 4",
+  "claude-haiku-4": "Haiku 4",
+  "gpt-4o": "GPT-4o",
+  "gpt-4": "GPT-4",
+  "gpt-3.5": "GPT-3.5",
+  "o1": "o1",
+  "o3": "o3",
+  "default": "Default",
+};
+
 function bindHeaderButtons(state) {
   const tipsBtn = document.getElementById("tips-btn");
   const refreshBtn = document.getElementById("refresh-btn");
@@ -75,74 +95,25 @@ function bindHeaderButtons(state) {
 // ── Tips content ───────────────────────────────────────────────────
 const TIPS = {
   claude: [
-    {
-      title: "Start a new chat when topic changes",
-      body: "Every message adds to the context. When you shift topics, start fresh — don't drag old context into a new task.",
-      prompt: null,
-    },
-    {
-      title: "Ask for compact answers first",
-      body: "Tell Claude to give the shortest useful answer, then expand only if needed. Saves tokens on both sides.",
-      prompt: "Give me the shortest useful answer first. Ask if I want more detail.",
-    },
-    {
-      title: "Summarize before a long session",
-      body: "When a conversation gets long, ask Claude to summarize key decisions. Start a new chat with just that summary.",
-      prompt: "Summarize the key decisions from this conversation in under 150 words.",
-    },
-    {
-      title: "Use Projects for recurring context",
-      body: "Put stable instructions and files in a Claude Project instead of repeating them every session.",
-      prompt: null,
-    },
-    {
-      title: "Watch your 5-hour session limit",
-      body: "Claude's 5-hour window resets independently of the 7-day limit. Check both before a heavy session.",
-      prompt: null,
-    },
-    {
-      title: "Use faster models for simple tasks",
-      body: "Don't use Opus for formatting a list. Save your premium quota for deep analysis and complex work.",
-      prompt: null,
-    },
+    { title: "Start a new chat when topic changes", body: "Every message adds to the context. When you shift topics, start fresh — don't drag old context into a new task.", prompt: null },
+    { title: "Ask for compact answers first", body: "Tell Claude to give the shortest useful answer, then expand only if needed. Saves tokens on both sides.", prompt: "Give me the shortest useful answer first. Ask if I want more detail." },
+    { title: "Summarize before a long session", body: "When a conversation gets long, ask Claude to summarize key decisions. Start a new chat with just that summary.", prompt: "Summarize the key decisions from this conversation in under 150 words." },
+    { title: "Use Projects for recurring context", body: "Put stable instructions and files in a Claude Project instead of repeating them every session.", prompt: null },
+    { title: "Watch your 5-hour session limit", body: "Claude's 5-hour window resets independently of the 7-day limit. Check both before a heavy session.", prompt: null },
+    { title: "Use faster models for simple tasks", body: "Don't use Opus for formatting a list. Save your premium quota for deep analysis and complex work.", prompt: null },
   ],
   chatgpt: [
-    {
-      title: "One job per chat",
-      body: "ChatGPT works best with a single clear purpose per conversation. Mixing tasks burns context fast.",
-      prompt: null,
-    },
-    {
-      title: "Put stable context in Custom Instructions",
-      body: "Stop re-briefing ChatGPT on every chat. Put your tone, format preferences, and recurring context in Custom Instructions.",
-      prompt: null,
-    },
-    {
-      title: "Split research from writing",
-      body: "Do research in one chat, then start fresh for the final output. Don't carry the full thread into writing.",
-      prompt: null,
-    },
-    {
-      title: "Skip Thinking mode for simple tasks",
-      body: "Thinking models use more tokens. Use them for complex problems — not for rewriting emails.",
-      prompt: "Give me a direct answer. No deep reasoning needed here.",
-    },
-    {
-      title: "Watch the bar during coding sessions",
-      body: "Code and logs burn tokens fast. When TokenPulse hits 70%, wrap up or summarize before continuing in a new chat.",
-      prompt: null,
-    },
-    {
-      title: "Use Projects for recurring work",
-      body: "One project per client, one per research area. Keeps conversations focused and context lean.",
-      prompt: null,
-    },
+    { title: "One job per chat", body: "ChatGPT works best with a single clear purpose per conversation. Mixing tasks burns context fast.", prompt: null },
+    { title: "Put stable context in Custom Instructions", body: "Stop re-briefing ChatGPT on every chat. Put your tone, format preferences, and recurring context in Custom Instructions.", prompt: null },
+    { title: "Split research from writing", body: "Do research in one chat, then start fresh for the final output. Don't carry the full thread into writing.", prompt: null },
+    { title: "Skip Thinking mode for simple tasks", body: "Thinking models use more tokens. Use them for complex problems — not for rewriting emails.", prompt: "Give me a direct answer. No deep reasoning needed here." },
+    { title: "Watch the bar during coding sessions", body: "Code and logs burn tokens fast. When TokenPulse hits 70%, wrap up or summarize before continuing in a new chat.", prompt: null },
+    { title: "Use Projects for recurring work", body: "One project per client, one per research area. Keeps conversations focused and context lean.", prompt: null },
   ],
 };
 
-// Pick 3 random tips, different each time popup opens
 function getRandomTips(platform) {
-  const pool = [...TIPS[platform] || TIPS.claude];
+  const pool = [...(TIPS[platform] || TIPS.claude)];
   const picked = [];
   while (picked.length < 3 && pool.length > 0) {
     const i = Math.floor(Math.random() * pool.length);
@@ -169,6 +140,19 @@ function dataRow(name, sub, pct) {
     </div>`;
 }
 
+function costRow(label, sub, costValue) {
+  return `
+    <div class="data-row">
+      <div class="data-left">
+        <div class="data-name">${label}</div>
+        <div class="data-sub">${sub}</div>
+      </div>
+      <div class="data-right">
+        <span class="data-pct" style="color:#67e8f9;font-size:14px">${fmtCost(costValue)}</span>
+      </div>
+    </div>`;
+}
+
 function rateLimitsHTML(usage) {
   const fhPct = Math.min(usage.five_hour?.utilization || 0, 100);
   const sdPct = Math.min(usage.seven_day?.utilization || 0, 100);
@@ -178,6 +162,35 @@ function rateLimitsHTML(usage) {
       <div class="data-card">
         ${dataRow("5-Hour Session", countdown(usage.five_hour?.resets_at), fhPct)}
         ${dataRow("7-Day Weekly", countdown(usage.seven_day?.resets_at), sdPct)}
+      </div>
+    </div>`;
+}
+
+function costHTML(used, model, history, platform) {
+  const pricePerM = (TT.COST_PER_M && TT.COST_PER_M[model]) || 3.00;
+  const convCost = (used / 1_000_000) * pricePerM;
+
+  const today = new Date().toDateString();
+  const todayRec = (history || []).find(h => h.platform === platform && h.date === today);
+  const dailyCost = todayRec?.cost ?? convCost;
+
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const weeklyCost = (history || [])
+    .filter(h => h.platform === platform && h.ts >= weekAgo)
+    .reduce((sum, h) => sum + (h.cost || 0), 0);
+
+  const modelLabel = MODEL_LABELS[model] || model;
+
+  return `
+    <div class="section">
+      <div class="section-title">Estimated Cost · ${modelLabel}</div>
+      <div class="data-card">
+        ${costRow("This conversation", "Input tokens only", convCost)}
+        ${costRow("Today", "Peak usage · all chats", dailyCost)}
+        ${costRow("This week", "Last 7 days", weeklyCost)}
+      </div>
+      <div style="font-size:9px;color:#1e1e1e;margin-top:6px;padding:0 2px">
+        ±8% accuracy · input tokens only · output not included
       </div>
     </div>`;
 }
@@ -206,14 +219,14 @@ function dailyHistoryHTML(history, platform) {
 // ── Header builder (shared across views) ──────────────────────────
 function headerHTML(badgeClass, badgeLabel, heroColor, showBack, activeIcon) {
   const backBtn = showBack
-    ? `<button class="icon-btn" id="back-btn" style="font-size:13px;color:#2a6b72">←</button>`
+    ? `<button class="icon-btn" id="back-btn" style="font-size:13px;color:#4a9ba5">←</button>`
     : "";
   const logoOrBack = showBack ? backBtn : `
     <div class="logo">
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <circle cx="9" cy="9" r="7" stroke="#0d3d42" stroke-width="2"/>
+        <circle cx="9" cy="9" r="7" stroke="#222" stroke-width="2"/>
         <path d="M9 2 a7 7 0 0 1 6.06 3.5" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="9" cy="9" r="4" stroke="#0d3d42" stroke-width="1.5"/>
+        <circle cx="9" cy="9" r="4" stroke="#1a1a1a" stroke-width="1.5"/>
         <path d="M9 5 a4 4 0 0 1 3.46 2 a4 4 0 0 1 0 4" stroke="#67e8f9" stroke-width="1.5" stroke-linecap="round"/>
         <text x="9" y="12.5" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="7" font-weight="800" fill="white">T</text>
       </svg>
@@ -228,36 +241,16 @@ function headerHTML(badgeClass, badgeLabel, heroColor, showBack, activeIcon) {
       <div class="hd-right">
         <div class="dot" style="background:${heroColor};box-shadow:0 0 6px ${heroColor}66"></div>
         <span class="badge ${badgeClass}">${badgeLabel}</span>
-        <button class="icon-btn ${activeIcon === 'tips' ? 'icon-btn-active' : ''}"
-          id="tips-btn" title="Token tips">💡</button>
-        <button class="icon-btn ${activeIcon === 'refresh' ? 'icon-btn-active' : ''}"
-          id="refresh-btn" title="Refresh">↻</button>
-        <button class="icon-btn ${activeIcon === 'settings' ? 'icon-btn-active' : ''}"
-          id="settings-btn" title="Settings">⚙</button>
+        <button class="icon-btn ${activeIcon === 'tips' ? 'icon-btn-active' : ''}" id="tips-btn" title="Token tips">💡</button>
+        <button class="icon-btn ${activeIcon === 'refresh' ? 'icon-btn-active' : ''}" id="refresh-btn" title="Refresh">↻</button>
+        <button class="icon-btn ${activeIcon === 'settings' ? 'icon-btn-active' : ''}" id="settings-btn" title="Settings">⚙</button>
       </div>
     </div>`;
 }
 
-function bindHeaderButtons(state) {
-  const tipsBtn = document.getElementById("tips-btn");
-  const refreshBtn = document.getElementById("refresh-btn");
-  const settingsBtn = document.getElementById("settings-btn");
-  const backBtn = document.getElementById("back-btn");
-
-  if (tipsBtn) tipsBtn.addEventListener("click", () => renderTips(state));
-  if (refreshBtn) refreshBtn.addEventListener("click", () => {
-    refreshBtn.classList.add("spin");
-    chrome.runtime.sendMessage({ type: "FORCE_REFRESH" });
-    setTimeout(() => location.reload(), 1500);
-  });
-  if (settingsBtn) settingsBtn.addEventListener("click", () => renderSettings(state));
-  if (backBtn) backBtn.addEventListener("click", () => renderMain(state));
-}
-
-
 // ── Main view ──────────────────────────────────────────────────────
 function renderMain(state) {
-  const { usage, context, history, platform } = state;
+  const { usage, context, history, platform, model } = state;
   const root = document.getElementById("root");
   const isClaude = platform === "claude";
   const ctx = context?.[platform] || {};
@@ -265,6 +258,7 @@ function renderMain(state) {
   const limit = ctx.limit || (isClaude ? TT.LIMITS["default"] : TT.LIMITS["gpt-4o"]);
   const ctxPct = safePct(used, limit);
   const ctxColor = colorFor(ctxPct);
+  const activeModel = model || (isClaude ? "claude-sonnet-4" : "gpt-4o");
 
   const badgeClass = isClaude ? "badge-claude" : platform === "chatgpt" ? "badge-chatgpt" : "badge-none";
   const badgeLabel = isClaude ? "Claude" : platform === "chatgpt" ? "ChatGPT" : "—";
@@ -301,11 +295,12 @@ function renderMain(state) {
       </div>
     </div>
 
+    ${costHTML(used, activeModel, history || [], platform)}
     ${isClaude && usage ? rateLimitsHTML(usage) : ""}
     ${dailyHistoryHTML(history || [], platform)}
 
     <div class="footer">
-      <span class="footer-note">chars ÷ 4 · ±8% · v2.0.2</span>
+      <span class="footer-note">chars ÷ 4 · ±8% · v2.1.0</span>
       <button class="new-chat" id="new-chat-btn">+ New chat</button>
     </div>
   `;
@@ -331,7 +326,7 @@ function renderTips(state) {
 
     <div class="section" style="padding-bottom:8px">
       <div class="section-title">Token Saving Tips · ${badgeLabel}</div>
-      <div style="font-size:10px;color:#0d3d42;margin-top:-6px;margin-bottom:4px">
+      <div style="font-size:10px;color:#222;margin-top:-6px;margin-bottom:4px">
         Refreshes each time you open this panel
       </div>
     </div>
@@ -351,18 +346,14 @@ function renderTips(state) {
     </div>
 
     <div class="footer">
-      <span class="footer-note">v2.0.2</span>
+      <span class="footer-note">v2.1.0</span>
       <button class="new-chat" id="more-tips-btn">Refresh tips</button>
     </div>
   `;
 
   bindHeaderButtons(state);
-
   document.getElementById("more-tips-btn").addEventListener("click", () => renderTips(state));
 
-  // Copy prompt buttons
-
-  // Copy prompt buttons
   document.querySelectorAll(".tip-copy-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const idx = btn.dataset.idx;
@@ -429,13 +420,13 @@ function renderSettings(state) {
         <div class="saved-msg" id="saved-msg" style="opacity:0">✓ Settings saved</div>
       </div>
 
-      <div style="padding:0 14px 14px;border-top:1px solid #0a2e32;margin-top:4px">
+      <div style="padding:0 14px 14px;border-top:1px solid #1a1a1a;margin-top:4px">
         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px">
           <div>
-            <div style="font-size:12px;font-weight:600;color:#2a6b72">TokenPulse</div>
-            <div style="font-size:10px;color:#0d3d42;margin-top:2px">Built by Anoop Kumar and Mansi Rathore · Alpha</div>
+            <div style="font-size:12px;font-weight:600;color:#4a9ba5">TokenPulse</div>
+            <div style="font-size:10px;color:#222;margin-top:2px">Built by Anoop Kumar and Mansi Rathore · Alpha</div>
           </div>
-          <div style="font-size:10px;color:#0d3d42">v2.0.2</div>
+          <div style="font-size:10px;color:#222">v2.1.0</div>
         </div>
       </div>
     `;
@@ -480,9 +471,9 @@ function renderEmpty() {
       <div class="hd-left">
         <div class="logo">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <circle cx="9" cy="9" r="7" stroke="#0d3d42" stroke-width="2"/>
+            <circle cx="9" cy="9" r="7" stroke="#222" stroke-width="2"/>
             <path d="M9 2 a7 7 0 0 1 6.06 3.5" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="9" cy="9" r="4" stroke="#0d3d42" stroke-width="1.5"/>
+            <circle cx="9" cy="9" r="4" stroke="#1a1a1a" stroke-width="1.5"/>
             <path d="M9 5 a4 4 0 0 1 3.46 2 a4 4 0 0 1 0 4" stroke="#67e8f9" stroke-width="1.5" stroke-linecap="round"/>
             <text x="9" y="12.5" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="7" font-weight="800" fill="white">T</text>
           </svg>
@@ -501,7 +492,7 @@ function renderEmpty() {
       </p>
     </div>
     <div class="footer">
-      <span class="footer-note">v2.0.2</span>
+      <span class="footer-note">v2.1.0</span>
     </div>
   `;
 }
@@ -517,11 +508,13 @@ async function init() {
   const platform = url.includes("claude.ai") ? "claude" : "chatgpt";
   const data = await chrome.runtime.sendMessage({ type: "GET_ALL_DATA" });
 
+  let liveModel = null;
   try {
     const live = await chrome.tabs.sendMessage(tab.id, { type: "GET_CONTEXT_STATE" });
     if (live?.used !== undefined) {
       data.context = data.context || {};
       data.context[platform] = { used: live.used, limit: live.limit };
+      liveModel = live.model || null;
     }
   } catch (_) { }
 
@@ -530,6 +523,7 @@ async function init() {
     context: data.context || {},
     history: data.history || [],
     platform,
+    model: liveModel,
   });
 }
 
