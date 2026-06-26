@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "TokenPulse — ChatGPT & Claude Tracker",
-  "version": "2.1.0",
-  "description": "Live token & rate limit tracker for ChatGPT and Claude. Context window bar, usage rings, notifications.",
+  "version": "2.2.0",
+  "description": "Live token & rate limit tracker for Claude, ChatGPT, and Gemini.",
   "permissions": [
     "storage",
     "alarms",
@@ -12,7 +12,8 @@
   "host_permissions": [
     "https://chatgpt.com/*",
     "https://chat.openai.com/*",
-    "https://claude.ai/*"
+    "https://claude.ai/*",
+    "https://gemini.google.com/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js"
@@ -22,10 +23,17 @@
       "matches": [
         "https://chatgpt.com/*",
         "https://chat.openai.com/*",
-        "https://claude.ai/*"
+        "https://claude.ai/*",
+        "https://gemini.google.com/*"
       ],
-      "js": ["lib/tokenizer.js", "lib/constants.js", "content/content.js"],
-      "css": ["content/content.css"],
+      "js": [
+        "lib/tokenizer.js",
+        "lib/constants.js",
+        "content/content.js"
+      ],
+      "css": [
+        "content/content.css"
+      ],
       "run_at": "document_idle"
     }
   ],
