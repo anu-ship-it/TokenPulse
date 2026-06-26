@@ -1,6 +1,6 @@
 "use strict";
 
-const SUPPORTED = ["chatgpt.com", "openai.com", "claude.ai"];
+const SUPPORTED = ["chatgpt.com", "openai.com", "claude.ai", "gemini.google.com"];
 
 // ── Helpers ────────────────────────────────────────────────────────
 function fk(n) {
@@ -74,6 +74,10 @@ const MODEL_LABELS = {
   "o1": "o1",
   "o3": "o3",
   "default": "Default",
+  "gemini-default":   "Gemini",
+  "gemini-1.5-pro":   "Gemini 1.5 Pro",
+  "gemini-1.5-flash": "Gemini 1.5 Flash",
+  "gemini-2.0-flash": "Gemini 2.0 Flash",
 };
 
 function bindHeaderButtons(state) {
@@ -255,13 +259,14 @@ function renderMain(state) {
   const isClaude = platform === "claude";
   const ctx = context?.[platform] || {};
   const used = ctx.used || 0;
-  const limit = ctx.limit || (isClaude ? TT.LIMITS["default"] : TT.LIMITS["gpt-4o"]);
+  const limit = ctx.limit || (isClaude ? TT.LIMITS["default"] : isGemini ? TT.LIMITS["gemini-default"] : TT.LIMITS["gpt-4o"]);
   const ctxPct = safePct(used, limit);
   const ctxColor = colorFor(ctxPct);
   const activeModel = model || (isClaude ? "claude-sonnet-4" : "gpt-4o");
 
-  const badgeClass = isClaude ? "badge-claude" : platform === "chatgpt" ? "badge-chatgpt" : "badge-none";
-  const badgeLabel = isClaude ? "Claude" : platform === "chatgpt" ? "ChatGPT" : "—";
+  const isGemini = platform === "gemini";
+  const badgeClass = isClaude ? "badge-claude" : isGemini ? "badge-gemini" : "badge-chatgpt";
+  const badgeLabel = isClaude ? "Claude" : isGemini ? "Gemini" : "ChatGPT";
 
   let heroPct = ctxPct;
   if (isClaude && usage) {
@@ -307,7 +312,8 @@ function renderMain(state) {
 
   bindHeaderButtons(state);
   document.getElementById("new-chat-btn").addEventListener("click", () => {
-    chrome.tabs.update({ url: isClaude ? "https://claude.ai/new" : "https://chatgpt.com/" });
+    const newUrl = isClaude ? "https://claude.ai/new" : isGemini ? "https://gemini.google.com/" : "https://chatgpt.com/";
+    chrome.tabs.update({ url: newUrl });
     window.close();
   });
 }
@@ -317,8 +323,9 @@ function renderTips(state) {
   const root = document.getElementById("root");
   const platform = state.platform;
   const isClaude = platform === "claude";
-  const badgeClass = isClaude ? "badge-claude" : "badge-chatgpt";
-  const badgeLabel = isClaude ? "Claude" : "ChatGPT";
+  const isGemini = state.platform === "gemini";
+  const badgeClass = isClaude ? "badge-claude" : isGemini ? "badge-gemini" : "badge-chatgpt";
+  const badgeLabel = isClaude ? "Claude" : isGemini ? "Gemini" : "ChatGPT";
   const tips = getRandomTips(platform);
 
   root.innerHTML = `
@@ -370,8 +377,9 @@ function renderTips(state) {
 function renderSettings(state) {
   const root = document.getElementById("root");
   const isClaude = state.platform === "claude";
-  const badgeClass = isClaude ? "badge-claude" : "badge-chatgpt";
-  const badgeLabel = isClaude ? "Claude" : "ChatGPT";
+  const isGemini = state.platform === "gemini";
+  const badgeClass = isClaude ? "badge-claude" : isGemini ? "badge-gemini" : "badge-chatgpt";
+  const badgeLabel = isClaude ? "Claude" : isGemini ? "Gemini" : "ChatGPT";
 
   chrome.storage.local.get([TT.KEY.SETTINGS], (r) => {
     const s = { ...TT.DEFAULTS, ...(r[TT.KEY.SETTINGS] || {}) };
@@ -505,7 +513,7 @@ async function init() {
 
   if (!ok) { renderEmpty(); return; }
 
-  const platform = url.includes("claude.ai") ? "claude" : "chatgpt";
+  const platform = url.includes("claude.ai") ? "claude" : url.includes("gemini.google.com") ? "gemini" : "chatgpt";
   const data = await chrome.runtime.sendMessage({ type: "GET_ALL_DATA" });
 
   let liveModel = null;

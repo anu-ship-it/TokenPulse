@@ -43,6 +43,7 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; }
 }
 .badge-claude  { background: rgba(232,137,74,.15); color: #e8894a; }
 .badge-chatgpt { background: rgba(25,195,125,.15);  color: #19c37d; }
+.badge-gemini { background: rgba(66,133,244,.15); color: #4285f4; }
 .badge-none    { background: rgba(255,255,255,.06);  color: #444; }
 
 .dot {
