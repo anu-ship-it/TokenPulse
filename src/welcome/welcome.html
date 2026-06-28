@@ -1,247 +1,652 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <title>Welcome — TokenPulse</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome — TokenPulse</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      background: #080808;
-      color: #f0f0f0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 16px;
-    }
+:root {
+  --bg:        #090909;
+  --s1:        #111114;
+  --s2:        #18181C;
+  --s3:        #202025;
+  --b:         rgba(255,255,255,0.06);
+  --bm:        rgba(255,255,255,0.10);
+  --t:         #EDEDF0;
+  --t2:        #7A7A8A;
+  --t3:        #3A3A4A;
+  --live:      #00E5A0;
+  --live-d:    rgba(0,229,160,0.10);
+  --live-b:    rgba(0,229,160,0.22);
+  --acc:       #6C5FFF;
+  --acc-d:     rgba(108,95,255,0.10);
+  --acc-b:     rgba(108,95,255,0.25);
+}
 
-    .card {
-      width: 100%;
-      max-width: 400px;
-      background: #111111;
-      border: 1px solid #1e1e1e;
-      border-radius: 20px;
-      padding: 40px 32px;
-      text-align: center;
-    }
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--t);
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
 
-    .logo {
-      width: 64px;
-      height: 64px;
-      border-radius: 18px;
-      background: #111111;
-      border: 2px solid #1e1e1e;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 18px;
-    }
+/* ── AMBIENT BACKGROUND RINGS ── */
+.bg-rings {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  overflow: hidden;
+}
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(108,95,255,0.07);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+.ring-1 { width: 500px; height: 500px; }
+.ring-2 { width: 760px; height: 760px; border-color: rgba(108,95,255,0.04); }
+.ring-3 { width: 1040px; height: 1040px; border-color: rgba(108,95,255,0.025); }
+.bg-glow {
+  position: absolute;
+  top: -200px; left: 50%; transform: translateX(-50%);
+  width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(108,95,255,0.07) 0%, transparent 65%);
+}
 
-    .logo svg {
-      width: 48px;
-      height: 48px;
-    }
+/* ── LAYOUT ── */
+.page {
+  position: fixed; inset: 0; z-index: 1;
+  display: flex; flex-direction: column;
+}
 
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: #f0f0f0;
-      margin-bottom: 4px;
-    }
+/* ── NAV ── */
+.nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 48px;
+  flex-shrink: 0;
+}
+.nav-brand {
+  display: flex; align-items: center; gap: 10px;
+}
+.nav-mark {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--s2); border: 1px solid var(--acc-b);
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-ring {
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid var(--acc); position: relative;
+}
+.nav-ring::after {
+  content: ''; position: absolute;
+  top: 2px; left: 2px;
+  width: 5px; height: 5px;
+  border-radius: 50%; background: var(--acc);
+}
+.nav-name {
+  font-size: 14px; font-weight: 600; color: var(--t);
+  letter-spacing: -0.2px;
+}
+.nav-alpha {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600; color: var(--acc);
+  background: var(--acc-d); border: 1px solid var(--acc-b);
+  padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px;
+}
+.nav-steps {
+  display: flex; align-items: center; gap: 6px;
+}
+.step-pip {
+  width: 28px; height: 2px; border-radius: 2px;
+  background: var(--s3);
+  transition: background 0.4s;
+  position: relative; overflow: hidden;
+}
+.step-pip.done { background: rgba(108,95,255,0.4); }
+.step-pip.active {
+  background: linear-gradient(90deg, var(--acc), #9B8FFF);
+}
+.step-pip.active::after {
+  content: '';
+  position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: rgba(255,255,255,0.4);
+  animation: sh 2.2s ease infinite;
+}
+@keyframes sh { to { left: 200%; } }
 
-    .tagline {
-      font-size: 11px;
-      color: #1e1e1e;
-      margin-bottom: 6px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
+/* ── SLIDES WRAPPER ── */
+.slides { flex: 1; position: relative; overflow: hidden; }
+.slide {
+  position: absolute; inset: 0;
+  display: none;
+  padding: 0 48px;
+  flex-direction: column;
+  justify-content: center;
+}
+.slide.on {
+  display: flex;
+  animation: sIn 0.36s cubic-bezier(0.22,1,0.36,1);
+}
+@keyframes sIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-    .sub {
-      font-size: 12px;
-      color: #555;
-      line-height: 1.6;
-      margin-bottom: 26px;
-    }
+/* ── SLIDE 0 — HERO ── */
+.hero-eyebrow {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 18px;
+}
+.hero-eye-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--live);
+  box-shadow: 0 0 6px rgba(0,229,160,0.5);
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+.hero-eye-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 500; color: var(--live);
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
 
-    .platforms {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 26px;
-    }
+.hero-headline {
+  font-size: clamp(38px, 5.5vw, 62px);
+  font-weight: 700; line-height: 1.06;
+  letter-spacing: -1.5px; color: var(--t);
+  margin-bottom: 20px;
+  max-width: 700px;
+}
+.hero-headline em { font-style: normal; color: var(--live); }
 
+.hero-sub {
+  font-size: 16px; color: var(--t2); line-height: 1.65;
+  max-width: 480px; margin-bottom: 36px;
+}
+.hero-sub strong { color: var(--t); font-weight: 600; }
 
+.plat-row {
+  display: flex; gap: 10px; margin-bottom: 40px;
+}
+.plat-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--s1); border: 1px solid var(--bm);
+  border-radius: 8px; padding: 10px 16px;
+}
+.plat-chip-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--live);
+  box-shadow: 0 0 5px rgba(0,229,160,0.5);
+  animation: blink 2s ease-in-out infinite;
+}
+.plat-chip:nth-child(2) .plat-chip-dot { animation-delay: 0.7s; }
+.plat-chip-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 600; color: var(--t);
+}
+.plat-chip-bar {
+  width: 60px; height: 3px;
+  background: var(--s3); border-radius: 2px; overflow: hidden;
+}
+.plat-chip-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, #00b87a, var(--live));
+}
+.no-api-tag {
+  display: flex; align-items: center; gap: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600; color: var(--live);
+  background: var(--live-d); border: 1px solid var(--live-b);
+  border-radius: 6px; padding: 7px 14px; width: fit-content;
+}
+.no-api-tag::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--live); flex-shrink: 0;
+  box-shadow: 0 0 5px rgba(0,229,160,0.5);
+}
 
-    .plat {
-      flex: 1;
-      padding: 10px 8px;
-      border-radius: 8px;
-      border: 1px solid #1e1e1e;
-      font-size: 12px;
-      font-weight: 600;
-      color: #06b6d4;
-      background: rgba(6, 182, 212, .06);
-    }
+/* ── SLIDE 1 — DEMO ── */
+.demo-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--acc);
+  margin-bottom: 12px;
+}
+.demo-headline {
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 700; line-height: 1.1; letter-spacing: -1px;
+  margin-bottom: 10px; max-width: 600px;
+}
+.demo-headline em { font-style: normal; color: var(--live); }
+.demo-sub {
+  font-size: 15px; color: var(--t2); line-height: 1.65;
+  max-width: 440px; margin-bottom: 30px;
+}
+.browser-mock {
+  background: var(--s1); border: 1px solid var(--bm);
+  border-radius: 12px; overflow: hidden;
+  max-width: 580px;
+}
+.bm-bar {
+  background: var(--s2); padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--b);
+}
+.bm-dots { display: flex; gap: 5px; }
+.bm-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--s3); }
+.bm-url {
+  flex: 1; background: var(--s3); border-radius: 5px;
+  padding: 4px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--t3);
+}
+.bm-body { padding: 16px; }
+.tp-bar-inject {
+  background: var(--s2); border: 1px solid var(--b);
+  border-radius: 7px; padding: 9px 12px; margin-bottom: 12px;
+}
+.tp-bar-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.tp-bar-brand {
+  display: flex; align-items: center; gap: 5px;
+}
+.tp-bar-brand-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--live); animation: blink 1.6s ease-in-out infinite;
+}
+.tp-bar-brand-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600; color: var(--t2);
+}
+.tp-bar-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 600; color: var(--live);
+}
+.tp-bar-track {
+  height: 4px; background: var(--s3); border-radius: 3px; overflow: hidden;
+}
+.tp-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, #00b87a, var(--live));
+  width: 0;
+  transition: width 1.1s cubic-bezier(0.22,1,0.36,1);
+}
+.tp-bar-meta {
+  display: flex; gap: 14px; margin-top: 6px;
+}
+.tp-meta-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--t3);
+}
+.tp-meta-chip span { color: var(--t2); }
+.fake-input-row {
+  display: flex; gap: 8px; align-items: flex-end;
+}
+.fake-textarea {
+  flex: 1; height: 40px; background: var(--s3);
+  border: 1px solid var(--b); border-radius: 7px;
+}
+.fake-send {
+  width: 40px; height: 40px; border-radius: 7px;
+  background: var(--acc); display: flex;
+  align-items: center; justify-content: center;
+  font-size: 16px; color: #fff;
+}
 
-    .steps {
-      text-align: left;
-      margin-bottom: 26px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+/* ── SLIDE 2 — COMPARE ── */
+.cmp-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--acc); margin-bottom: 12px;
+}
+.cmp-headline {
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 700; line-height: 1.1; letter-spacing: -1px;
+  margin-bottom: 10px; max-width: 600px;
+}
+.cmp-headline em { font-style: normal; color: var(--live); }
+.cmp-sub {
+  font-size: 15px; color: var(--t2); line-height: 1.65;
+  max-width: 440px; margin-bottom: 28px;
+}
+.cmp-table {
+  max-width: 560px;
+  border: 1px solid var(--bm); border-radius: 12px; overflow: hidden;
+}
+.cmp-head {
+  display: grid; grid-template-columns: 1fr 110px 110px;
+  padding: 10px 16px; background: var(--s2);
+  border-bottom: 1px solid var(--b);
+}
+.cmp-head span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600; color: var(--t3);
+  text-transform: uppercase; letter-spacing: 0.7px;
+  text-align: center;
+}
+.cmp-head span:first-child { text-align: left; }
+.cmp-row {
+  display: grid; grid-template-columns: 1fr 110px 110px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--b);
+  align-items: center;
+  background: var(--s1);
+}
+.cmp-row:last-child { border-bottom: none; }
+.cmp-row:nth-child(even) { background: rgba(255,255,255,0.01); }
+.cmp-feat { font-size: 13px; color: var(--t2); }
+.cmp-cell { text-align: center; font-size: 14px; }
+.ck { color: var(--live); font-size: 15px; }
+.cx { color: var(--t3); font-size: 12px; }
+.ca {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--live);
+  background: var(--live-d); border: 1px solid var(--live-b);
+  border-radius: 4px; padding: 2px 6px;
+}
 
-    .step {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
+/* ── FOOTER ── */
+.footer {
+  padding: 18px 48px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.footer-left {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--t3);
+  line-height: 1.7;
+}
+.footer-left span { color: var(--t2); }
+.footer-btns { display: flex; gap: 8px; align-items: center; }
+.btn {
+  padding: 11px 22px; border-radius: 9px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  border: none; font-family: 'Space Grotesk', sans-serif;
+  transition: all 0.15s ease; letter-spacing: -0.1px;
+}
+.btn-main { background: var(--acc); color: #fff; }
+.btn-main:hover { background: #7D71FF; transform: translateY(-1px); }
+.btn-back {
+  background: transparent; color: var(--t2);
+  border: 1px solid var(--bm);
+}
+.btn-back:hover { color: var(--t); }
 
-    .num {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      background: rgba(6, 182, 212, .08);
-      border: 1px solid rgba(6, 182, 212, .2);
-      color: #06b6d4;
-      font-size: 10px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 1px;
-    }
-
-    .step-text {
-      font-size: 12px;
-      color: #555;
-      line-height: 1.55;
-    }
-
-    .step-text strong {
-      color: #67e8f9;
-    }
-
-    .cta {
-      width: 100%;
-      padding: 13px;
-      background: #06b6d4;
-      color: #111111;
-      border: none;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      transition: opacity .15s;
-    }
-
-    .cta:hover {
-      opacity: .85;
-    }
-
-    .built-by {
-      margin-top: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .built-by-divider {
-      height: 1px;
-      flex: 1;
-      background: #1e1e1e;
-    }
-
-    .built-by-text {
-      font-size: 10px;
-      color: #1e1e1e;
-      letter-spacing: .06em;
-      white-space: nowrap;
-    }
-
-    .built-by-text span {
-      color: #555;
-      font-weight: 600;
-    }
-
-
-
-
-    .note {
-      font-size: 10px;
-      color: #0a2e32;
-      margin-top: 10px;
-      line-height: 1.6;
-    }
-  </style>
+.launcher {
+  display: flex; align-items: center; gap: 8px;
+}
+.launcher-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--t3); margin-right: 2px; white-space: nowrap;
+}
+.lbtn {
+  padding: 9px 14px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--s2); color: var(--t2);
+  border: 1px solid var(--bm);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.lbtn:hover { background: var(--acc); color: #fff; border-color: var(--acc); transform: translateY(-1px); }
+</style>
 </head>
-
 <body>
-  <div class="card">
-    <div class="logo">
-      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="24" cy="24" r="20" stroke="#1e1e1e" stroke-width="4" />
-        <path d="M24 4 a20 20 0 0 1 17.3 10" stroke="#06b6d4" stroke-width="4" stroke-linecap="round" />
-        <circle cx="24" cy="24" r="13" stroke="#1e1e1e" stroke-width="3.5" />
-        <path d="M24 11 a13 13 0 0 1 11.3 6.5 a13 13 0 0 1 0 13" stroke="#67e8f9" stroke-width="3.5"
-          stroke-linecap="round" />
-        <text x="24" y="29" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" font-weight="800"
-          fill="white">T</text>
-      </svg>
+
+<!-- ambient bg -->
+<div class="bg-rings">
+  <div class="bg-glow"></div>
+  <div class="ring ring-1"></div>
+  <div class="ring ring-2"></div>
+  <div class="ring ring-3"></div>
+</div>
+
+<div class="page">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <img src="../icons/icon48.png" alt="TokenPulse" style="width:28px;height:28px;border-radius:7px;display:block;">
+      <span class="nav-name">TokenPulse</span>
+      <span class="nav-alpha">alpha</span>
+    </div>
+    <div class="nav-steps">
+      <div class="step-pip active" id="p0"></div>
+      <div class="step-pip"        id="p1"></div>
+      <div class="step-pip"        id="p2"></div>
+    </div>
+  </nav>
+
+  <!-- SLIDES -->
+  <div class="slides">
+
+    <!-- 0 — HOOK -->
+    <div class="slide on" id="s0">
+      <div class="hero-eyebrow">
+        <div class="hero-eye-dot"></div>
+        <span class="hero-eye-text">Live on Claude &amp; ChatGPT</span>
+      </div>
+      <div class="hero-headline">
+        Know exactly where<br>you stand — <em>live.</em>
+      </div>
+      <div class="hero-sub">
+        A slim bar above every input box. Real rate limits, reset countdowns,
+        daily history. <strong>No API key. No account. Zero setup.</strong>
+      </div>
+      <div class="plat-row">
+        <div class="plat-chip">
+          <div class="plat-chip-dot"></div>
+          <div class="plat-chip-label">Claude</div>
+          <div class="plat-chip-bar"><div class="plat-chip-fill" style="width:62%"></div></div>
+        </div>
+        <div class="plat-chip">
+          <div class="plat-chip-dot" style="animation-delay:0.5s"></div>
+          <div class="plat-chip-label">ChatGPT</div>
+          <div class="plat-chip-bar"><div class="plat-chip-fill" style="width:38%"></div></div>
+        </div>
+        <div class="plat-chip">
+          <div class="plat-chip-dot" style="animation-delay:1s"></div>
+          <div class="plat-chip-label">Gemini</div>
+          <div class="plat-chip-bar"><div class="plat-chip-fill" style="width:55%"></div></div>
+        </div>
+        <div class="plat-chip">
+          <div class="plat-chip-dot" style="animation-delay:1.5s"></div>
+          <div class="plat-chip-label">DeepSeek</div>
+          <div class="plat-chip-bar"><div class="plat-chip-fill" style="width:27%"></div></div>
+        </div>
+      </div>
+      <div class="no-api-tag">No API key required — uses your existing session</div>
     </div>
 
-@@ -208,37 +102,43 @@ <h1>TokenPulse</h1>
-    <div class="steps">
-      <div class="step">
-        <div class="num">1</div>
-        <div class="step-text"><strong>Pin the extension</strong> to your toolbar — the dual-ring icon shows your usage
-          at a glance.</div>
-
+    <!-- 1 — IN-PAGE DEMO -->
+    <div class="slide" id="s1">
+      <div class="demo-label">In-page token bar</div>
+      <div class="demo-headline">
+        Injected directly<br>above the <em>input box.</em>
       </div>
-      <div class="step">
-        <div class="num">2</div>
-        <div class="step-text"><strong>Open Claude or ChatGPT</strong> — a live token bar appears above the input box
-          tracking your context window.</div>
-
+      <div class="demo-sub">
+        TokenPulse injects a slim strip into Claude, ChatGPT, Gemini, and DeepSeek. No tab-switching.
+        See context usage, reset time, and model headroom — right where you type.
       </div>
-      <div class="step">
-        <div class="num">3</div>
-        <div class="step-text"><strong>Click the icon</strong> to see context usage, Claude rate limits, reset
-          countdowns, and daily history.</div>
-
+      <div class="browser-mock">
+        <div class="bm-bar">
+          <div class="bm-dots">
+            <div class="bm-dot"></div>
+            <div class="bm-dot"></div>
+            <div class="bm-dot"></div>
+          </div>
+          <div class="bm-url" id="demo-url">claude.ai/chat</div>
+        </div>
+        <div class="bm-body">
+          <div class="tp-bar-inject">
+            <div class="tp-bar-top">
+              <div class="tp-bar-brand">
+                <div class="tp-bar-brand-dot"></div>
+                <span class="tp-bar-brand-name">TokenPulse</span>
+              </div>
+              <div class="tp-bar-pct" id="demo-pct">62%</div>
+            </div>
+            <div class="tp-bar-track">
+              <div class="tp-bar-fill" id="demo-fill"></div>
+            </div>
+            <div class="tp-bar-meta">
+              <div class="tp-meta-chip">5-hr limit <span id="demo-limit">resets 2h 14m</span></div>
+              <div class="tp-meta-chip">7-day <span>41% used</span></div>
+            </div>
+          </div>
+          <div class="fake-input-row">
+            <div class="fake-textarea"></div>
+            <div class="fake-send">↑</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <button class="cta" id="start-btn">Get Started</button>
-
-    <div class="built-by">
-      <div class="built-by-divider"></div>
-      <div class="built-by-text">Built by <span>Anoop Kumar and Mansi Rathore</span> · Alpha</div>
-      <div class="built-by-divider"></div>
+    <!-- 2 — COMPARE -->
+    <div class="slide" id="s2">
+      <div class="cmp-eyebrow">What's tracked where</div>
+      <div class="cmp-headline">
+        Four platforms.<br><em>One extension.</em>
+      </div>
+      <div class="cmp-sub">
+        Core tracking works everywhere. Claude's internal API unlocks real rate limits and countdowns on top.
+      </div>
+      <div class="cmp-table">
+        <div class="cmp-head" style="grid-template-columns:1fr 70px 70px 70px 80px">
+          <span>Feature</span>
+          <span>Claude</span>
+          <span>GPT</span>
+          <span>Gemini</span>
+          <span>DeepSeek</span>
+        </div>
+        <div class="cmp-row" style="grid-template-columns:1fr 70px 70px 70px 80px">
+          <div class="cmp-feat">Live token bar</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+        </div>
+        <div class="cmp-row" style="grid-template-columns:1fr 70px 70px 70px 80px">
+          <div class="cmp-feat">Context window %</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+        </div>
+        <div class="cmp-row" style="grid-template-columns:1fr 70px 70px 70px 80px">
+          <div class="cmp-feat">Smart notifications</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+        </div>
+        <div class="cmp-row" style="grid-template-columns:1fr 70px 70px 70px 80px">
+          <div class="cmp-feat">Daily usage history</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell ck">✓</div>
+        </div>
+        <div class="cmp-row" style="grid-template-columns:1fr 70px 70px 70px 80px">
+          <div class="cmp-feat">5-hr + 7-day limits</div>
+          <div class="cmp-cell"><span class="ca">real API</span></div>
+          <div class="cmp-cell cx">—</div>
+          <div class="cmp-cell cx">—</div>
+          <div class="cmp-cell cx">—</div>
+        </div>
+        <div class="cmp-row" style="grid-template-columns:1fr 70px 70px 70px 80px">
+          <div class="cmp-feat">Reset countdowns</div>
+          <div class="cmp-cell ck">✓</div>
+          <div class="cmp-cell cx">—</div>
+          <div class="cmp-cell cx">—</div>
+          <div class="cmp-cell cx">—</div>
+        </div>
+      </div>
     </div>
 
-    <p class="note">All data stays on your device. No servers, no accounts, no tracking.</p>
   </div>
 
-  <script>
-    document.getElementById("start-btn").addEventListener("click", () => {
-      window.close();
-      // Fallback if window.close() is blocked
-      window.location.href = "https://claude.ai";
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-left">
+      Built by <span>Anoop Kumar &amp; Mansi Rathore</span><br>
+      local-only · no servers · no tracking
+    </div>
+    <div class="footer-btns" id="footerBtns">
+      <button class="btn btn-back" id="backBtn" style="display:none" onclick="nav(-1)">← Back</button>
+      <button class="btn btn-main" id="nextBtn" onclick="nav(1)">Get started →</button>
+    </div>
+    <!-- shown only on last slide -->
+    <div class="launcher" id="launcher" style="display:none">
+      <button class="btn btn-back" onclick="nav(-1)">← Back</button>
+      <span class="launcher-label">Open in</span>
+      <button class="lbtn" onclick="open_('https://claude.ai')">Claude</button>
+      <button class="lbtn" onclick="open_('https://chatgpt.com')">ChatGPT</button>
+      <button class="lbtn" onclick="open_('https://gemini.google.com')">Gemini</button>
+      <button class="lbtn" onclick="open_('https://chat.deepseek.com')">DeepSeek</button>
+    </div>
+  </footer>
 
+</div>
 
-    });
-  </script>
+<script>
+let cur = 0;
+const total = 3;
+
+const PLATFORMS = [
+  { label: 'Claude',    url: 'https://claude.ai' },
+  { label: 'ChatGPT',  url: 'https://chatgpt.com' },
+  { label: 'Gemini',   url: 'https://gemini.google.com' },
+  { label: 'DeepSeek', url: 'https://chat.deepseek.com' },
+];
+
+function open_(url) {
+  if (typeof chrome !== 'undefined' && chrome.tabs) {
+    chrome.tabs.create({ url });
+  } else {
+    window.open(url, '_blank');
+  }
+}
+
+function nav(d) {
+  const next = cur + d;
+  if (next < 0 || next >= total) return;
+  cur = next;
+  render();
+}
+
+function render() {
+  for (let i = 0; i < total; i++) {
+    document.getElementById('s' + i).classList.toggle('on', i === cur);
+    const p = document.getElementById('p' + i);
+    p.className = 'step-pip';
+    if (i < cur) p.classList.add('done');
+    else if (i === cur) p.classList.add('active');
+  }
+
+  const isLast = cur === total - 1;
+  document.getElementById('backBtn').style.display = cur > 0 ? '' : 'none';
+  document.getElementById('footerBtns').style.display = isLast ? 'none' : '';
+  document.getElementById('launcher').style.display = isLast ? 'flex' : 'none';
+
+  const nb = document.getElementById('nextBtn');
+  if (nb) nb.textContent = cur === 0 ? 'Get started →' : 'Next →';
+
+  if (cur === 1) {
+    setTimeout(() => {
+      const f = document.getElementById('demo-fill');
+      if (f) f.style.width = '62%';
+    }, 120);
+  }
+}
+
+render();
+</script>
 </body>
 </html>
