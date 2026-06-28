@@ -9,10 +9,11 @@
   const IS_CLAUDE = location.hostname.includes("claude.ai");
   const IS_GPT = location.hostname.includes("chatgpt.com") || location.hostname.includes("openai.com");
   const IS_GEMINI = location.hostname.includes("gemini.google.com");
+  const IS_DEEPSEEK = location.hostname.includes("chat.deepseek.com");
 
-  if (!IS_CLAUDE && !IS_GPT && !IS_GEMINI) return;
+  if (!IS_CLAUDE && !IS_GPT && !IS_GEMINI && !IS_DEEPSEEK) return;
 
-  const PLATFORM = IS_CLAUDE ? "claude" : IS_GPT ? "chatgpt" : "gemini";
+  const PLATFORM = IS_CLAUDE ? "claude" : IS_GPT ? "chatgpt" : IS_GEMINI ? "gemini" : "deepseek";
 
   let lastTokenCount = 0;
   let lastSessionId = getSessionId();
@@ -59,6 +60,15 @@
       }
       return "gemini-default";
     }
+    if (IS_DEEPSEEK) {
+      const btn = document.querySelector('[class*="model"]');
+      if (btn) {
+        const txt = btn.textContent.toLowerCase();
+        if (txt.includes("r1")) return "deepseek-r1";
+        if (txt.includes("v3")) return "deepseek-v3";
+      }
+      return "deepseek-default";
+    }
     // ChatGPT
     const btn = document.querySelector("[data-testid='model-switcher-dropdown-button'], button[aria-label*='GPT']");
     const txt = btn ? btn.textContent.toLowerCase() : "";
@@ -85,6 +95,7 @@
   function countTokens() {
     if (IS_CLAUDE) return countClaude();
     if (IS_GEMINI) return countGemini();
+    if (IS_DEEPSEEK) return countDeepSeek();
     return countGPT();
   }
 
@@ -135,6 +146,16 @@
 
     return Tokenizer.estimate(totalText.trim());
   }
+
+  function countDeepSeek() {
+  const msgs = document.querySelectorAll('.ds-message');
+  if (msgs.length === 0) return 0;
+  const text = Array.from(msgs).map(el => el.textContent || "").join(" ");
+  const input = document.querySelector('textarea');
+  const inputText = input ? (input.value || "").trim() : "";
+  const clean = inputText && text.includes(inputText) ? text.replace(inputText, "") : text;
+  return Tokenizer.estimate(clean.trim());
+}
 
   function countGPT() {
     const selectors = [
@@ -215,42 +236,42 @@
 
   // ── Scan ───────────────────────────────────────────────────────
   function scan() {
-  const tokens = countTokens();
-  const model  = getModel();
-  const limit  = TT.LIMITS[model] || TT.LIMITS["default"];
-  lastTokenCount = tokens;
-  lastModel      = model;
+    const tokens = countTokens();
+    const model = getModel();
+    const limit = TT.LIMITS[model] || TT.LIMITS["default"];
+    lastTokenCount = tokens;
+    lastModel = model;
 
-  // Get stored rate limit data to show whichever is worse
-  if (IS_CLAUDE) {
-    chrome.storage.local.get([TT.KEY.USAGE], (r) => {
-      const usage      = r[TT.KEY.USAGE];
-      const sessionPct = usage?.five_hour?.utilization || 0;
-      const weeklyPct  = usage?.seven_day?.utilization  || 0;
-      const ratePct    = Math.max(sessionPct, weeklyPct);
-      const ctxPct     = Math.round((tokens / limit) * 100);
-      const worstPct   = Math.max(ctxPct, ratePct);
+    // Get stored rate limit data to show whichever is worse
+    if (IS_CLAUDE) {
+      chrome.storage.local.get([TT.KEY.USAGE], (r) => {
+        const usage = r[TT.KEY.USAGE];
+        const sessionPct = usage?.five_hour?.utilization || 0;
+        const weeklyPct = usage?.seven_day?.utilization || 0;
+        const ratePct = Math.max(sessionPct, weeklyPct);
+        const ctxPct = Math.round((tokens / limit) * 100);
+        const worstPct = Math.max(ctxPct, ratePct);
 
-      // If rate limit is the bottleneck, show it against a virtual 100-unit scale
-      if (ratePct > ctxPct) {
-        updateBar(ratePct, 100, true); // true = rateLimit mode
-      } else {
-        updateBar(tokens, limit, false);
-      }
-    });
-  } else {
-    updateBar(tokens, limit, false);
+        // If rate limit is the bottleneck, show it against a virtual 100-unit scale
+        if (ratePct > ctxPct) {
+          updateBar(ratePct, 100, true); // true = rateLimit mode
+        } else {
+          updateBar(tokens, limit, false);
+        }
+      });
+    } else {
+      updateBar(tokens, limit, false);
+    }
+
+    saveDailyUsage(tokens, limit, model);
+
+    try {
+      chrome.runtime.sendMessage({
+        type: "CONTEXT_UPDATE", platform: PLATFORM,
+        used: tokens, limit, model, cost: estimateCost(tokens, model),
+      });
+    } catch (_) { }
   }
-
-  saveDailyUsage(tokens, limit, model);
-
-  try {
-    chrome.runtime.sendMessage({
-      type: "CONTEXT_UPDATE", platform: PLATFORM,
-      used: tokens, limit, model, cost: estimateCost(tokens, model),
-    });
-  } catch (_) {}
-}
 
   function scheduleScan() {
     if (rafPending) return;
@@ -270,6 +291,7 @@
   function resolveWrapper() {
     if (IS_CLAUDE) return document.querySelector("fieldset, div[contenteditable='true']");
     if (IS_GEMINI) return document.querySelector("input-area-v2, rich-textarea");
+    if (IS_DEEPSEEK) return document.querySelector('textarea');
     return document.querySelector("form:has(#prompt-textarea), form:has(textarea)");
   }
 
@@ -314,26 +336,26 @@
 
   // ── Bar update ─────────────────────────────────────────────────
   function updateBar(used, limit, isRateLimit) {
-  const fill  = document.getElementById("tt-fill");
-  const count = document.getElementById("tt-count");
-  if (!fill || !count) { injectBar(); return; }
+    const fill = document.getElementById("tt-fill");
+    const count = document.getElementById("tt-count");
+    if (!fill || !count) { injectBar(); return; }
 
-  const pct       = Math.min((used / limit) * 100, 100);
-  const remaining = Math.max(limit - used, 0);
+    const pct = Math.min((used / limit) * 100, 100);
+    const remaining = Math.max(limit - used, 0);
 
-  fill.style.width = pct + "%";
-  fill.className   = "tt-fill" + (pct >= TT.DANGER ? " tt-red" : pct >= TT.WARN ? " tt-yellow" : "");
+    fill.style.width = pct + "%";
+    fill.className = "tt-fill" + (pct >= TT.DANGER ? " tt-red" : pct >= TT.WARN ? " tt-yellow" : "");
 
-  if (isRateLimit) {
-    count.textContent = `Session ${Math.round(pct)}% used`;
-  } else {
-    count.textContent = formatK(remaining) + " left";
+    if (isRateLimit) {
+      count.textContent = `Session ${Math.round(pct)}% used`;
+    } else {
+      count.textContent = formatK(remaining) + " left";
+    }
+
+    count.className = "tt-count" + (pct >= TT.DANGER ? " tt-red" : pct >= TT.WARN ? " tt-yellow" : "");
+
+    if (pct >= 100 && !popupShown) { popupShown = true; showPopup(limit); }
   }
-
-  count.className = "tt-count" + (pct >= TT.DANGER ? " tt-red" : pct >= TT.WARN ? " tt-yellow" : "");
-
-  if (pct >= 100 && !popupShown) { popupShown = true; showPopup(limit); }
-}
 
   function formatK(n) {
     return n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n);

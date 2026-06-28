@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TokenPulse — ChatGPT & Claude Tracker",
   "version": "2.2.0",
-  "description": "Live token & rate limit tracker for Claude, ChatGPT, and Gemini.",
+  "description": "Live token & rate limit tracker for Claude, ChatGPT, Gemini and DeepSeek. ",
   "permissions": [
     "storage",
     "alarms",
@@ -13,7 +13,8 @@
     "https://chatgpt.com/*",
     "https://chat.openai.com/*",
     "https://claude.ai/*",
-    "https://gemini.google.com/*"
+    "https://gemini.google.com/*",
+    "https://chat.deepseek.com/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js"
@@ -24,7 +25,8 @@
         "https://chatgpt.com/*",
         "https://chat.openai.com/*",
         "https://claude.ai/*",
-        "https://gemini.google.com/*"
+        "https://gemini.google.com/*",
+        "https://chat.deepseek.com/*"
       ],
       "js": [
         "lib/tokenizer.js",
