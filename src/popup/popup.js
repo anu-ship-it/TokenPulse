@@ -193,7 +193,7 @@ function costHTML(used, model, history, platform) {
         ${costRow("Today", "Peak usage · all chats", dailyCost)}
         ${costRow("This week", "Last 7 days", weeklyCost)}
       </div>
-      <div style="font-size:9px;color:#1e1e1e;margin-top:6px;padding:0 2px">
+      <div style="font-size:9px;color:#696868;margin-top:6px;padding:0 2px">
         ±8% accuracy · input tokens only · output not included
       </div>
     </div>`;
@@ -333,7 +333,7 @@ function renderTips(state) {
 
     <div class="section" style="padding-bottom:8px">
       <div class="section-title">Token Saving Tips · ${badgeLabel}</div>
-      <div style="font-size:10px;color:#222;margin-top:-6px;margin-bottom:4px">
+      <div style="font-size:10px;color:#696868;margin-top:-6px;margin-bottom:4px">
         Refreshes each time you open this panel
       </div>
     </div>
@@ -432,9 +432,9 @@ function renderSettings(state) {
         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px">
           <div>
             <div style="font-size:12px;font-weight:600;color:#4a9ba5">TokenPulse</div>
-            <div style="font-size:10px;color:#222;margin-top:2px">Built by Anoop Kumar and Mansi Rathore · Alpha</div>
+            <div style="font-size:10px;color:#696868;margin-top:2px">Built by Anoop Kumar and Mansi Rathore · Alpha</div>
           </div>
-          <div style="font-size:10px;color:#222">v2.1.0</div>
+          <div style="font-size:10px;color:#696868">v2.1.0</div>
         </div>
       </div>
     `;
