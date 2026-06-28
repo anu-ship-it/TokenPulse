@@ -1,14 +1,16 @@
 # TokenPulse
 
-**Live token & rate limit tracker for Claude and ChatGPT.**
+**Live token & rate limit tracker for Claude, ChatGPT, Gemini, and DeepSeek.**
 
 Built by Anoop Kumar and Mansi Rathore · Alpha
+
+[Chrome Web Store](https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic) · [GitHub](https://github.com/anu-ship-it/TokenPulse)
 
 ---
 
 ## What it does
 
-TokenPulse sits inside Claude and ChatGPT and tells you exactly where you stand — before the model starts forgetting your conversation or your session gets cut off.
+TokenPulse sits inside Claude, ChatGPT, Gemini, and DeepSeek and tells you exactly where you stand — before the model starts forgetting your conversation or your session gets cut off.
 
 A live token bar above the input box tracks your context window in real time. Click the toolbar icon for the full dashboard.
 
@@ -16,33 +18,38 @@ A live token bar above the input box tracks your context window in real time. Cl
 
 ## Features
 
-| Feature | Claude | ChatGPT |
-|---------|--------|---------|
-| Live in-page token bar | ✅ | ✅ |
-| Context window tracking | ✅ | ✅ |
-| Daily usage history | ✅ | ✅ |
-| Real rate limit data (5hr + 7day) | ✅ | — |
-| Reset countdowns | ✅ | — |
-| Smart notifications (75%, 90%, 100%) | ✅ | ✅ |
-| Settings — thresholds + refresh interval | ✅ | ✅ |
+| Feature | Claude | ChatGPT | Gemini | DeepSeek |
+|---------|--------|---------|--------|----------|
+| Live in-page token bar | ✅ | ✅ | ✅ | ✅ |
+| Context window tracking | ✅ | ✅ | ✅ | ✅ |
+| Daily usage history | ✅ | ✅ | ✅ | ✅ |
+| Cost estimator | ✅ | ✅ | ✅ | ✅ |
+| Token saving tips | ✅ | ✅ | ✅ | ✅ |
+| Smart notifications (75%, 90%, 100%) | ✅ | ✅ | ✅ | ✅ |
+| Real rate limit data (5hr + 7day) | ✅ | — | — | — |
+| Reset countdowns | ✅ | — | — | — |
+| Settings inside popup | ✅ | ✅ | ✅ | ✅ |
 
-ChatGPT does not expose rate limit data via any API. Context window tracking works on both platforms.
+Claude is the only platform that exposes real rate limit data via API. All other platforms use context window estimation only.
 
 ---
 
 ## Install
 
 ### Chrome Web Store
-git clone https://github.com/anu-ship-it/TokenPulse
+[Install TokenPulse](https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic)
+
+Works on Chrome, Edge, Brave, and Opera.
 
 ### Manual (Developer Mode)
-1. Clone or download this repo
+1. Clone this repo
+```bash
+git clone https://github.com/anu-ship-it/TokenPulse
+```
 2. Go to `chrome://extensions/`
 3. Enable **Developer mode**
 4. Click **Load unpacked**
 5. Select the `src/` folder
-
-Works on Chrome, Edge, Brave, and Opera.
 
 ---
 
@@ -54,16 +61,16 @@ src/
 ├── background/
 │   └── service-worker.js     # Alarms, API fetch, notifications
 ├── content/
-│   ├── content.js            # In-page token bar (both platforms)
-│   └── content.css           # Bar + popup styles
+│   ├── content.js            # In-page token bar (all 4 platforms)
+│   └── content.css           # Bar + exhaustion popup styles
 ├── lib/
-│   ├── constants.js          # All config, limits, colors, keys
+│   ├── constants.js          # Config, limits, pricing, colors, keys
 │   ├── storage.js            # All chrome.storage ops
-│   └── tokenizer.js          # Character-based token estimator
+│   └── tokenizer.js          # Character-based token estimator (±8%)
 ├── popup/
 │   ├── popup.html
 │   ├── popup.css
-│   └── popup.js              # Main view + settings view
+│   └── popup.js              # Main / Tips / Settings views
 ├── welcome/
 │   └── welcome.html          # First install onboarding
 └── icons/
@@ -76,15 +83,42 @@ src/
 
 ## How token counting works
 
-TokenPulse estimates tokens using the `chars ÷ 4` rule — OpenAI's documented approximation for English text. Accuracy is ±8%, which errs conservative (shows slightly more remaining than actual).
+TokenPulse estimates tokens using the `chars ÷ 4` rule — OpenAI's documented approximation for English text. Accuracy is ±8%.
 
-For Claude, real rate limit data (5-hour session and 7-day weekly utilization) is fetched directly from Claude's internal API using your existing browser session. No credentials are stored or transmitted anywhere.
+**Platform-specific selectors:**
+- **Claude** — scans largest body child element, subtracts input text
+- **ChatGPT** — `article[data-testid]` message containers
+- **Gemini** — `user-query` and `model-response` custom elements
+- **DeepSeek** — `.ds-message` containers
+
+For Claude, real rate limit data (5-hour session and 7-day weekly utilization) is fetched from Claude's internal API using your existing browser session. The in-page bar shows whichever is worse — context window usage or session rate limit — so you always see the real bottleneck.
+
+---
+
+## Cost Estimator
+
+TokenPulse calculates estimated input token cost based on current model pricing:
+
+| Model | Price per 1M tokens |
+|-------|-------------------|
+| Claude Sonnet 4 | $3.00 |
+| Claude Opus 4 | $15.00 |
+| Claude Haiku 4 | $0.80 |
+| GPT-4o | $2.50 |
+| GPT-4 | $30.00 |
+| o1 / o3 | $15.00 / $10.00 |
+| Gemini 1.5 Pro | $3.50 |
+| Gemini 2.0 Flash | $0.10 |
+| DeepSeek V3 | $0.27 |
+| DeepSeek R1 | $0.55 |
+
+Accuracy: ±8% · Input tokens only · Output not included.
 
 ---
 
 ## Notifications
 
-Notifications fire when you cross a new threshold — not on a timer. Once you're notified at 75%, you won't be notified again until you cross 90%. If usage drops below all thresholds, the tracker resets so you'll be notified again next time.
+Notifications fire when you cross a new threshold — not on a timer. Once notified at 75%, you won't be notified again until you cross 90%. Resets when usage drops below all thresholds.
 
 Default thresholds: **75%, 90%, 100%** (50% available, off by default).
 
@@ -101,23 +135,32 @@ Default thresholds: **75%, 90%, 100%** (50% available, off by default).
 
 ## Roadmap
 
-### v2.0 — Current
-- Dual-platform support (Claude + ChatGPT)
-- Real Claude API rate limits
+### v2.2.0 — Current
+- Gemini support (1M context window)
+- DeepSeek support (V3 + R1)
+- Cost estimator across all platforms
+- Smart rate limit bar — shows session limit when it's the bottleneck
+- Tips panel with copy-to-clipboard prompts
+
+### v2.1.0
+- Cost estimator for Claude and ChatGPT
+- Model detection for accurate pricing
+
+### v2.0.0
+- TokenPulse rebrand — dual-ring teal icon
+- Real Claude API rate limits (5hr + 7day)
 - Auto-saving daily usage history
 - Smart threshold notifications
-- Settings inside popup (no new tabs)
-- TokenPulse branding
+- Settings inside popup
 
-### v2.1 — Next
+### v1.0.0
+- Initial release — Claude + ChatGPT token bar
+
+### Coming next
+- Response-ready notification (alert when model finishes generating while tab is backgrounded)
+- VS Code extension — token and cost tracking inside the editor
 - Firefox support
-- Response-ready notification (alert when model finishes generating)
-- Weekly usage summary
-
-### Future
-- Chrome Web Store release
-- Usage export (CSV)
-- Keyboard shortcut to open popup
+- Usage history export (CSV)
 
 ---
 
@@ -126,13 +169,13 @@ Default thresholds: **75%, 90%, 100%** (50% available, off by default).
 No build step. Pure vanilla JS, HTML, CSS.
 
 ```bash
-git clone https://github.com/yourusername/tokenpulse
+git clone https://github.com/anu-ship-it/TokenPulse
 # Load src/ as unpacked extension in chrome://extensions/
 ```
 
 To release:
 ```bash
-git tag v2.0.0
+git tag v2.2.0
 git push --tags
 # GitHub Actions auto-zips src/ and creates a release
 ```
@@ -151,4 +194,4 @@ MIT — see LICENSE file
 
 ---
 
-*TokenPulse is an independent project. Not affiliated with Anthropic or OpenAI.*
+*TokenPulse is an independent project. Not affiliated with Anthropic, OpenAI, Google, or DeepSeek.*
