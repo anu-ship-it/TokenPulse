@@ -385,8 +385,8 @@ function renderTips(state) {
 function renderSettings(state) {
   const root = document.getElementById("root");
   const isClaude = state.platform === "claude";
-  const isGemini    = platform === "gemini";
-  const isDeepSeek  = platform === "deepseek";
+  const isGemini    = state.platform === "gemini";
+  const isDeepSeek  = state.platform === "deepseek";
   const badgeClass  = isClaude ? "badge-claude" : isGemini ? "badge-gemini" : isDeepSeek ? "badge-deepseek" : "badge-chatgpt";
   const badgeLabel  = isClaude ? "Claude" : isGemini ? "Gemini" : isDeepSeek ? "DeepSeek" : "ChatGPT";
 

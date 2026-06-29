@@ -17,3 +17,11 @@
 ### Fixed
 - Get Started button on welcome page now redirects to claude.ai if window.close() is blocked
 - Corrected author name in welcome page
+
+## [2.2.0] - 2026-06-30
+### Added
+- Gemini support — 1M context window tracking
+- DeepSeek support — V3 and R1 models
+- Cost estimator for all 4 platforms
+- Smart rate limit bar — shows session limit when it's the actual bottleneck
+- DeepSeek and Gemini badges in popup
