@@ -454,12 +454,13 @@ function renderSettings(state) {
 
     document.getElementById("rate-btn").addEventListener("click", () => {
       chrome.tabs.create({ url: STORE_REVIEW_URL });
+      window.close();
     });
 
     document.getElementById("support-btn").addEventListener("click", () => {
-      renderSupport(state);
+      chrome.tabs.create({ url: "https://anu-ship-it.github.io/TokenPulse/support.html" });
+      window.close();
     });
-
     document.getElementById("save-btn").addEventListener("click", async () => {
       const settings = {
         notify_50: document.getElementById("n50").checked,
@@ -477,96 +478,6 @@ function renderSettings(state) {
   });
 }
 
-// ── Support view ─────────────────────────────────────────────────
-function renderSupport(state) {
-  const root = document.getElementById("root");
-  const pm = platformMeta(state.platform);
-
-  root.innerHTML = `
-    ${headerHTML(pm.badgeClass, pm.badgeLabel, TT.COLOR.GREEN, true, "settings")}
-
-    <div class="section">
-      <div class="section-title">Send Feedback</div>
-      <div style="font-size:11px;color:#4a9ba5;line-height:1.6;margin-bottom:14px">
-        Bug, feature request, or just want to say something — we read every message and usually reply within 24 hours.
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div>
-          <div class="support-label">Your email (optional)</div>
-          <input type="email" id="sup-email" class="support-input" placeholder="you@example.com">
-        </div>
-        <div>
-          <div class="support-label">Type</div>
-          <select id="sup-type" class="support-input">
-            <option value="bug">Bug report</option>
-            <option value="feature">Feature request</option>
-            <option value="other">Something else</option>
-          </select>
-        </div>
-        <div>
-          <div class="support-label">Message</div>
-          <textarea id="sup-message" class="support-textarea" rows="4" placeholder="What happened? If reporting a bug, include what you expected vs what you saw."></textarea>
-        </div>
-      </div>
-
-      <button class="save-btn" id="sup-submit" style="margin-top:14px">Send Feedback</button>
-      <div class="saved-msg" id="sup-saved" style="opacity:0">✓ Sent — thank you</div>
-    </div>
-
-    <div class="footer">
-      <span class="footer-note">v2.2.0</span>
-    </div>
-  `;
-
-  bindHeaderButtons(state);
-
-  document.getElementById("sup-submit").addEventListener("click", async () => {
-    const email = document.getElementById("sup-email").value;
-    const type = document.getElementById("sup-type").value;
-    const message = document.getElementById("sup-message").value;
-    const btn = document.getElementById("sup-submit");
-
-    if (!message.trim()) {
-      document.getElementById("sup-message").style.borderColor = "#ef4444";
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = "Sending...";
-
-    try {
-      const res = await fetch(FORMSPREE_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify({
-          email: email || "not provided",
-          type,
-          message,
-          platform: state.platform,
-          version: "2.2.0",
-          source: "extension_popup",
-        }),
-      });
-
-      if (res.ok) {
-        const msg = document.getElementById("sup-saved");
-        msg.style.opacity = "1";
-        document.getElementById("sup-email").value = "";
-        document.getElementById("sup-message").value = "";
-        btn.textContent = "Send Feedback";
-        btn.disabled = false;
-        setTimeout(() => { msg.style.opacity = "0"; }, 3000);
-      } else {
-        btn.textContent = "Send Feedback";
-        btn.disabled = false;
-      }
-    } catch (_) {
-      btn.textContent = "Send Feedback";
-      btn.disabled = false;
-    }
-  });
-}
 
 function toggleRow(id, label, desc, checked) {
   return `
