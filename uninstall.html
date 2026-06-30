@@ -52,7 +52,7 @@ html, body {
   padding: 22px 0; max-width: 560px; width: 100%; margin: 0 auto;
 }
 .nav-brand { display: flex; align-items: center; gap: 9px; }
-.nav-mark { width: 28px; height: 28px; border-radius: 7px; background: var(--s2); border: 1px solid var(--acc-b); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.nav-mark { width: 28px; height: 28px; border-radius: 7px; background: var(--s2); border: 1px solid var(--acc-b); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
 .nav-name { font-size: 13px; font-weight: 600; color: var(--t); letter-spacing: -0.2px; }
 .nav-alpha { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 600; color: var(--acc); background: var(--acc-d); border: 1px solid var(--acc-b); padding: 2px 6px; border-radius: 4px; }
 .store-link { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--t2); text-decoration: none; letter-spacing: 0.3px; }
@@ -155,15 +155,7 @@ textarea:focus { border-color: var(--acc-b); }
 <div class="page">
   <nav class="nav">
     <div class="nav-brand">
-      <div class="nav-mark">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="9" cy="9" r="7" stroke="#2a2a35" stroke-width="2"/>
-          <path d="M9 2 a7 7 0 0 1 6.06 3.5" stroke="#6C5FFF" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="9" cy="9" r="4" stroke="#1a1a22" stroke-width="1.5"/>
-          <path d="M9 5 a4 4 0 0 1 3.46 2 a4 4 0 0 1 0 4" stroke="#9B8FFF" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="9" cy="9" r="1.5" fill="#6C5FFF"/>
-        </svg>
-      </div>
+      <div class="nav-mark"><img src="https://raw.githubusercontent.com/anu-ship-it/TokenPulse/main/src/icons/icon48.png" alt="TokenPulse" width="22" height="22" style="display:block;border-radius:4px;"></div>
       <span class="nav-name">TokenPulse</span>
       <span class="nav-alpha">alpha</span>
     </div>
