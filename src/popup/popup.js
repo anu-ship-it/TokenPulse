@@ -373,6 +373,13 @@ function renderSettings(state) {
   chrome.storage.local.get([TT.KEY.SETTINGS], (r) => {
     const s = { ...TT.DEFAULTS, ...(r[TT.KEY.SETTINGS] || {}) };
 
+    const metaLinksHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+      <button class="meta-link" id="rate-btn">⭐ review</button>
+      <span style="color:#222;font-size:10px">·</span>
+      <button class="meta-link" id="support-btn">help</button>
+    </div>`;
+
     root.innerHTML = `
       ${headerHTML(pm.badgeClass, pm.badgeLabel, TT.COLOR.GREEN, true, "settings")}
 
@@ -417,35 +424,17 @@ function renderSettings(state) {
         <div class="saved-msg" id="saved-msg" style="opacity:0">✓ Settings saved</div>
       </div>
 
-      <div class="section">
-        <div class="section-title">Feedback & Support</div>
-        <div class="data-card">
-          <button class="link-row" id="rate-btn">
-            <span class="link-row-icon">⭐</span>
-            <div class="link-row-text">
-              <div class="data-name">Rate TokenPulse</div>
-              <div class="data-sub">Leave a review on Chrome Web Store</div>
-            </div>
-            <span class="link-row-arrow">→</span>
-          </button>
-          <button class="link-row" id="support-btn">
-            <span class="link-row-icon">💬</span>
-            <div class="link-row-text">
-              <div class="data-name">Send feedback</div>
-              <div class="data-sub">Report a bug or request a feature</div>
-            </div>
-            <span class="link-row-arrow">→</span>
-          </button>
-        </div>
+      <div class="meta-links">
+        <button class="meta-link" id="rate-btn">⭐ review</button>
+        <span class="meta-dot">·</span>
+        <button class="meta-link" id="support-btn">help</button>
       </div>
 
-      <div style="padding:0 14px 14px;border-top:1px solid #1a1a1a;margin-top:4px">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px">
-          <div>
-            <div style="font-size:12px;font-weight:600;color:#4a9ba5">TokenPulse</div>
-            <div style="font-size:10px;color:#3a3a3a;margin-top:2px">Built by Anoop Kumar and Mansi Rathore · Alpha</div>
-          </div>
-          <div style="font-size:10px;color:#3a3a3a">v2.2.0</div>
+      <div style="padding:0 14px 16px;border-top:1px solid #1a1a1a;margin-top:4px">
+        <div style="padding-top:12px">
+          <div style="font-size:12px;font-weight:600;color:#4a9ba5">TokenPulse <span style="color:#3a3a3a;font-weight:400">v2.2.0</span></div>
+          <div style="font-size:10px;color:#3a3a3a;margin-top:2px">Built by Anoop Kumar and Mansi Rathore · Alpha</div>
+          ${metaLinksHTML}
         </div>
       </div>
     `;
