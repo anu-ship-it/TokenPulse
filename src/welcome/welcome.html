@@ -412,7 +412,7 @@ html, body {
   <!-- NAV -->
   <nav class="nav">
     <div class="nav-brand">
-      <img src="../icons/icon48.png" alt="TokenPulse" style="width:28px;height:28px;border-radius:7px;display:block;">
+    <img id="nav-logo" alt="TokenPulse" width="28" height="28" style="display:block;border-radius:7px;border:1px solid rgba(108,95,255,0.25);">
       <span class="nav-name">TokenPulse</span>
       <span class="nav-alpha">alpha</span>
     </div>
@@ -596,6 +596,12 @@ html, body {
 </div>
 
 <script>
+// Set logo via extension URL so relative paths never break
+const logoEl = document.getElementById('nav-logo');
+if (logoEl && typeof chrome !== 'undefined' && chrome.runtime) {
+  logoEl.src = chrome.runtime.getURL('icons/icon48.png');
+}
+
 let cur = 0;
 const total = 3;
 
