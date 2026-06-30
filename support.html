@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support — TokenPulse</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #080808; color: #f0f0f0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .wrap { width: 100%; max-width: 560px; }
+
+    .top-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 48px;
+    }
+    .brand { display: flex; align-items: center; gap: 9px; }
+    .brand-icon {
+      width: 26px; height: 26px; border-radius: 7px;
+      background: #111; border: 1.5px solid #222;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .brand-name { font-size: 14px; font-weight: 700; color: #67e8f9; }
+    .back-link {
+      font-size: 11px; font-weight: 700; letter-spacing: .08em;
+      color: #4a9ba5; text-decoration: none; text-transform: uppercase;
+    }
+    .back-link:hover { color: #67e8f9; }
+
+    .label-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: #06b6d4; margin-bottom: 14px;
+    }
+    h1 {
+      font-size: 38px; font-weight: 800; letter-spacing: -.02em;
+      line-height: 1.15; margin-bottom: 18px;
+      font-style: italic;
+    }
+    h1 span { color: #67e8f9; }
+
+    .intro {
+      font-size: 14px; color: #6b8a8e; line-height: 1.65;
+      margin-bottom: 36px; max-width: 460px;
+    }
+
+    .card {
+      background: #0d0d0d; border: 1px solid #1e1e1e;
+      border-radius: 16px; padding: 32px;
+    }
+
+    .field { margin-bottom: 20px; }
+    .field-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: #4a4a4a; margin-bottom: 8px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 12px 14px;
+      background: #080808; color: #f0f0f0;
+      border: 1px solid #1e1e1e; border-radius: 10px;
+      font-size: 14px; font-family: inherit;
+      outline: none; transition: border-color .15s;
+    }
+    .field input::placeholder, .field textarea::placeholder { color: #2a2a2a; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #06b6d4; }
+    .field textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+    .field select { cursor: pointer; }
+
+    .submit-btn {
+      width: 100%; padding: 15px;
+      background: #06b6d4; color: #080808;
+      border: none; border-radius: 11px;
+      font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity .15s;
+    }
+    .submit-btn:hover { opacity: .88; }
+    .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .footer-note {
+      font-size: 12px; color: #3a3a3a; margin-top: 18px;
+      text-align: center; line-height: 1.6;
+    }
+    .footer-note a { color: #06b6d4; text-decoration: none; }
+    .footer-note a:hover { text-decoration: underline; }
+
+    .meta-row {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 40px;
+      font-size: 11px; color: #2a2a2a;
+    }
+
+    .success {
+      display: none; text-align: center; padding: 40px 20px;
+    }
+    .success-icon { font-size: 32px; margin-bottom: 16px; }
+    .success-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .success-sub { font-size: 13px; color: #6b8a8e; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="5.5" stroke="#222" stroke-width="1.5"/>
+            <path d="M7 1.5 a5.5 5.5 0 0 1 4.76 2.75" stroke="#06b6d4" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="7" cy="7" r="3.2" stroke="#1a1a1a" stroke-width="1.2"/>
+            <path d="M7 3.8 a3.2 3.2 0 0 1 2.77 1.6 a3.2 3.2 0 0 1 0 3.2" stroke="#67e8f9" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="brand-name">TokenPulse</span>
+      </div>
+      <a href="https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic" class="back-link" target="_blank">← Web Store</a>
+    </div>
+
+    <div id="form-state">
+      <div class="label-eyebrow">Support</div>
+      <h1>Need a <span>hand?</span></h1>
+      <p class="intro">
+        Bug, feature request, anything TokenPulse-related. We read every message and usually reply within 24 hours.
+      </p>
+
+      <div class="card">
+        <div class="field">
+          <div class="field-label">Your Email (optional)</div>
+          <input type="email" id="email" placeholder="you@example.com">
+        </div>
+
+        <div class="field">
+          <div class="field-label">Type</div>
+          <select id="type">
+            <option value="bug">Bug report</option>
+            <option value="feature">Feature request</option>
+            <option value="other">Something else</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Message</div>
+          <textarea id="message" placeholder="What happened? If reporting a bug, include what you expected vs what you saw."></textarea>
+        </div>
+
+        <button class="submit-btn" id="submit-btn">
+          Send feedback
+          <span>→</span>
+        </button>
+      </div>
+
+      <p class="footer-note">
+        You can also email <a href="mailto:anup17508@gmail.com">anup17508@gmail.com</a> directly,
+        or visit the <a href="https://anu-ship-it.github.io/TokenPulse" target="_blank">marketing site</a>.
+      </p>
+    </div>
+
+    <div class="success" id="success-state">
+      <div class="success-icon">🙏</div>
+      <div class="success-title">Thanks — message sent.</div>
+      <div class="success-sub">We read every message and usually reply within 24 hours.</div>
+    </div>
+
+    <div class="meta-row">
+      Built by Anoop Kumar and Mansi Rathore · Alpha
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("submit-btn").addEventListener("click", async () => {
+      const email   = document.getElementById("email").value;
+      const type    = document.getElementById("type").value;
+      const message = document.getElementById("message").value;
+      const btn     = document.getElementById("submit-btn");
+
+      if (!message.trim()) {
+        document.getElementById("message").style.borderColor = "#ef4444";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Sending...";
+
+      try {
+        const res = await fetch("https://formspree.io/f/xqeoqzdg", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({
+            email: email || "not provided",
+            type,
+            message,
+            source: "support_page",
+          }),
+        });
+
+        if (res.ok) {
+          document.getElementById("form-state").style.display = "none";
+          document.getElementById("success-state").style.display = "block";
+        } else {
+          btn.disabled = false;
+          btn.textContent = "Send feedback →";
+        }
+      } catch (_) {
+        btn.disabled = false;
+        btn.textContent = "Send feedback →";
+      }
+    });
+  </script>
+</body>
+</html>
