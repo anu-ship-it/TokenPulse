@@ -309,14 +309,27 @@ function renderMain(state) {
     ${dailyHistoryHTML(history || [], platform)}
 
     <div class="footer">
-      <span class="footer-note">chars ÷ 4 · ±8% · v2.2.0</span>
+      <div class="footer-meta-links">
+        <button class="meta-link" id="main-rate-btn">⭐ review</button>
+        <span class="meta-dot">·</span>
+        <button class="meta-link" id="main-support-btn">help</button>
+      </div>
       <button class="new-chat" id="new-chat-btn">+ New chat</button>
     </div>
   `;
 
   bindHeaderButtons(state);
+
   document.getElementById("new-chat-btn").addEventListener("click", () => {
     chrome.tabs.update({ url: pm.newChatUrl });
+    window.close();
+  });
+  document.getElementById("main-rate-btn").addEventListener("click", () => {
+    chrome.tabs.create({ url: STORE_REVIEW_URL });
+    window.close();
+  });
+  document.getElementById("main-support-btn").addEventListener("click", () => {
+    chrome.tabs.create({ url: "https://anu-ship-it.github.io/TokenPulse/support.html" });
     window.close();
   });
 }
@@ -373,13 +386,6 @@ function renderSettings(state) {
   chrome.storage.local.get([TT.KEY.SETTINGS], (r) => {
     const s = { ...TT.DEFAULTS, ...(r[TT.KEY.SETTINGS] || {}) };
 
-    const metaLinksHTML = `
-    <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
-      <button class="meta-link" id="rate-btn">⭐ review</button>
-      <span style="color:#222;font-size:10px">·</span>
-      <button class="meta-link" id="support-btn">help</button>
-    </div>`;
-
     root.innerHTML = `
       ${headerHTML(pm.badgeClass, pm.badgeLabel, TT.COLOR.GREEN, true, "settings")}
 
@@ -409,9 +415,9 @@ function renderSettings(state) {
               <div class="data-sub">Background refresh frequency</div>
             </div>
             <select id="refresh" class="sel">
-              <option value="1"  ${s.refresh_minutes === 1 ? "selected" : ""}>1 min</option>
-              <option value="2"  ${s.refresh_minutes === 2 ? "selected" : ""}>2 min</option>
-              <option value="5"  ${s.refresh_minutes === 5 ? "selected" : ""}>5 min</option>
+              <option value="1"  ${s.refresh_minutes === 1  ? "selected" : ""}>1 min</option>
+              <option value="2"  ${s.refresh_minutes === 2  ? "selected" : ""}>2 min</option>
+              <option value="5"  ${s.refresh_minutes === 5  ? "selected" : ""}>5 min</option>
               <option value="10" ${s.refresh_minutes === 10 ? "selected" : ""}>10 min</option>
               <option value="15" ${s.refresh_minutes === 15 ? "selected" : ""}>15 min</option>
             </select>
@@ -424,39 +430,23 @@ function renderSettings(state) {
         <div class="saved-msg" id="saved-msg" style="opacity:0">✓ Settings saved</div>
       </div>
 
-      <div class="meta-links">
-        <button class="meta-link" id="rate-btn">⭐ review</button>
-        <span class="meta-dot">·</span>
-        <button class="meta-link" id="support-btn">help</button>
-      </div>
-
       <div style="padding:0 14px 16px;border-top:1px solid #1a1a1a;margin-top:4px">
         <div style="padding-top:12px">
           <div style="font-size:12px;font-weight:600;color:#4a9ba5">TokenPulse <span style="color:#3a3a3a;font-weight:400">v2.2.0</span></div>
           <div style="font-size:10px;color:#3a3a3a;margin-top:2px">Built by Anoop Kumar and Mansi Rathore · Alpha</div>
-          ${metaLinksHTML}
         </div>
       </div>
     `;
 
     bindHeaderButtons(state);
 
-    document.getElementById("rate-btn").addEventListener("click", () => {
-      chrome.tabs.create({ url: STORE_REVIEW_URL });
-      window.close();
-    });
-
-    document.getElementById("support-btn").addEventListener("click", () => {
-      chrome.tabs.create({ url: "https://anu-ship-it.github.io/TokenPulse/support.html" });
-      window.close();
-    });
     document.getElementById("save-btn").addEventListener("click", async () => {
       const settings = {
-        notify_50: document.getElementById("n50").checked,
-        notify_75: document.getElementById("n75").checked,
-        notify_90: document.getElementById("n90").checked,
-        notify_100: document.getElementById("n100").checked,
-        show_bar: document.getElementById("show_bar").checked,
+        notify_50:       document.getElementById("n50").checked,
+        notify_75:       document.getElementById("n75").checked,
+        notify_90:       document.getElementById("n90").checked,
+        notify_100:      document.getElementById("n100").checked,
+        show_bar:        document.getElementById("show_bar").checked,
         refresh_minutes: parseInt(document.getElementById("refresh").value, 10),
       };
       await chrome.runtime.sendMessage({ type: "SAVE_SETTINGS", settings });
@@ -466,7 +456,6 @@ function renderSettings(state) {
     });
   });
 }
-
 
 function toggleRow(id, label, desc, checked) {
   return `
@@ -533,11 +522,11 @@ async function init() {
   } catch (_) { }
 
   renderMain({
-    usage: data.usage,
-    context: data.context || {},
-    history: data.history || [],
+    usage:    data.usage,
+    context:  data.context || {},
+    history:  data.history || [],
     platform,
-    model: liveModel,
+    model:    liveModel,
   });
 }
 
