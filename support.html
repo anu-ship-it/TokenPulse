@@ -1,216 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Support — TokenPulse</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #080808; color: #f0f0f0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      min-height: 100vh;
-      display: flex; align-items: center; justify-content: center;
-      padding: 40px 20px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support — TokenPulse</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .wrap { width: 100%; max-width: 560px; }
+:root {
+  --bg:        #090909;
+  --s1:        #111114;
+  --s2:        #18181C;
+  --s3:        #202025;
+  --b:         rgba(255,255,255,0.06);
+  --bm:        rgba(255,255,255,0.10);
+  --t:         #EDEDF0;
+  --t2:        #7A7A8A;
+  --t3:        #3A3A4A;
+  --live:      #00E5A0;
+  --live-d:    rgba(0,229,160,0.10);
+  --live-b:    rgba(0,229,160,0.22);
+  --acc:       #6C5FFF;
+  --acc-d:     rgba(108,95,255,0.10);
+  --acc-b:     rgba(108,95,255,0.25);
+}
 
-    .top-row {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 48px;
-    }
-    .brand { display: flex; align-items: center; gap: 9px; }
-    .brand-icon {
-      width: 26px; height: 26px; border-radius: 7px;
-      background: #111; border: 1.5px solid #222;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .brand-name { font-size: 14px; font-weight: 700; color: #67e8f9; }
-    .back-link {
-      font-size: 11px; font-weight: 700; letter-spacing: .08em;
-      color: #4a9ba5; text-decoration: none; text-transform: uppercase;
-    }
-    .back-link:hover { color: #67e8f9; }
+html, body {
+  width: 100%; min-height: 100vh;
+  background: var(--bg); color: var(--t);
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
 
-    .label-eyebrow {
-      font-size: 11px; font-weight: 700; letter-spacing: .1em;
-      text-transform: uppercase; color: #06b6d4; margin-bottom: 14px;
-    }
-    h1 {
-      font-size: 38px; font-weight: 800; letter-spacing: -.02em;
-      line-height: 1.15; margin-bottom: 18px;
-      font-style: italic;
-    }
-    h1 span { color: #67e8f9; }
+.bg-rings { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.ring { position: absolute; border-radius: 50%; border: 1px solid rgba(108,95,255,0.07); top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.ring-1 { width: 460px; height: 460px; }
+.ring-2 { width: 700px; height: 700px; border-color: rgba(108,95,255,0.04); }
+.ring-3 { width: 960px; height: 960px; border-color: rgba(108,95,255,0.025); }
+.bg-glow { position: absolute; top: -180px; left: 50%; transform: translateX(-50%); width: 560px; height: 560px; border-radius: 50%; background: radial-gradient(circle, rgba(108,95,255,0.06) 0%, transparent 65%); }
 
-    .intro {
-      font-size: 14px; color: #6b8a8e; line-height: 1.65;
-      margin-bottom: 36px; max-width: 460px;
-    }
+.page { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; padding: 0 24px; }
 
-    .card {
-      background: #0d0d0d; border: 1px solid #1e1e1e;
-      border-radius: 16px; padding: 32px;
-    }
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; max-width: 600px; width: 100%; margin: 0 auto; }
+.nav-brand { display: flex; align-items: center; gap: 9px; }
+.nav-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--s2); border: 1px solid var(--acc-b); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.nav-mark img { width: 18px; height: 18px; display: block; }
+.nav-name { font-size: 13px; font-weight: 600; color: var(--t); letter-spacing: -0.2px; }
+.nav-alpha { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 600; color: var(--acc); background: var(--acc-d); border: 1px solid var(--acc-b); padding: 2px 6px; border-radius: 4px; }
+.store-link { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--t2); text-decoration: none; letter-spacing: 0.3px; }
+.store-link:hover { color: var(--t); }
 
-    .field { margin-bottom: 20px; }
-    .field-label {
-      font-size: 10px; font-weight: 700; letter-spacing: .1em;
-      text-transform: uppercase; color: #4a4a4a; margin-bottom: 8px;
-    }
-    .field input, .field select, .field textarea {
-      width: 100%; padding: 12px 14px;
-      background: #080808; color: #f0f0f0;
-      border: 1px solid #1e1e1e; border-radius: 10px;
-      font-size: 14px; font-family: inherit;
-      outline: none; transition: border-color .15s;
-    }
-    .field input::placeholder, .field textarea::placeholder { color: #2a2a2a; }
-    .field input:focus, .field select:focus, .field textarea:focus { border-color: #06b6d4; }
-    .field textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
-    .field select { cursor: pointer; }
+.center { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px 0 48px; }
+.wrap { width: 100%; max-width: 520px; }
 
-    .submit-btn {
-      width: 100%; padding: 15px;
-      background: #06b6d4; color: #080808;
-      border: none; border-radius: 11px;
-      font-size: 14px; font-weight: 700;
-      cursor: pointer; font-family: inherit;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: opacity .15s;
-    }
-    .submit-btn:hover { opacity: .88; }
-    .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+.eyebrow-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--live); box-shadow: 0 0 6px rgba(0,229,160,0.5); animation: blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+.eyebrow-text { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: var(--live); letter-spacing: 0.8px; text-transform: uppercase; }
 
-    .footer-note {
-      font-size: 12px; color: #3a3a3a; margin-top: 18px;
-      text-align: center; line-height: 1.6;
-    }
-    .footer-note a { color: #06b6d4; text-decoration: none; }
-    .footer-note a:hover { text-decoration: underline; }
+h1 { font-size: clamp(28px, 4vw, 38px); font-weight: 700; line-height: 1.15; letter-spacing: -0.8px; color: var(--t); margin-bottom: 10px; }
+h1 em { font-style: normal; color: var(--live); }
+.sub { font-size: 14px; color: var(--t2); line-height: 1.65; margin-bottom: 32px; max-width: 440px; }
 
-    .meta-row {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      margin-top: 40px;
-      font-size: 11px; color: #2a2a2a;
-    }
+.card { background: var(--s1); border: 1px solid var(--bm); border-radius: 16px; padding: 26px; }
 
-    .success {
-      display: none; text-align: center; padding: 40px 20px;
-    }
-    .success-icon { font-size: 32px; margin-bottom: 16px; }
-    .success-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-    .success-sub { font-size: 13px; color: #6b8a8e; line-height: 1.6; }
-  </style>
+.field { margin-bottom: 18px; }
+.field-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--t3); margin-bottom: 9px; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 12px 14px;
+  background: var(--s2); color: var(--t);
+  border: 1px solid var(--bm); border-radius: 9px;
+  font-size: 13.5px; font-family: 'Space Grotesk', sans-serif;
+  outline: none; transition: border-color 0.15s;
+}
+.field input::placeholder, .field textarea::placeholder { color: var(--t3); }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--acc-b); }
+.field textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+.field select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0L5 6L10 0' fill='none' stroke='%237A7A8A' stroke-width='1.4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+
+.submit-btn {
+  width: 100%; padding: 14px; border-radius: 10px;
+  background: var(--acc); color: #fff; border: none;
+  font-size: 13.5px; font-weight: 600; cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.15s ease;
+}
+.submit-btn:hover { background: #7D71FF; transform: translateY(-1px); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.footer-note { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--t3); margin-top: 18px; text-align: center; line-height: 1.7; }
+.footer-note a { color: var(--live); text-decoration: none; }
+.footer-note a:hover { text-decoration: underline; }
+
+.byline { padding: 36px 0 28px; max-width: 600px; width: 100%; margin: 0 auto; text-align: center; }
+.byline-text { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--t3); }
+.byline-text span { color: var(--t2); }
+
+/* success */
+.success { display: none; text-align: left; }
+.success-icon-wrap { width: 48px; height: 48px; border-radius: 12px; background: var(--live-d); border: 1px solid var(--live-b); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+.success-icon-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px rgba(0,229,160,0.5); }
+.success h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 8px; }
+.success p { font-size: 13.5px; color: var(--t2); line-height: 1.6; }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="top-row">
-      <div class="brand">
-        <div class="brand-icon">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <circle cx="7" cy="7" r="5.5" stroke="#222" stroke-width="1.5"/>
-            <path d="M7 1.5 a5.5 5.5 0 0 1 4.76 2.75" stroke="#06b6d4" stroke-width="1.5" stroke-linecap="round"/>
-            <circle cx="7" cy="7" r="3.2" stroke="#1a1a1a" stroke-width="1.2"/>
-            <path d="M7 3.8 a3.2 3.2 0 0 1 2.77 1.6 a3.2 3.2 0 0 1 0 3.2" stroke="#67e8f9" stroke-width="1.2" stroke-linecap="round"/>
-          </svg>
+
+<div class="bg-rings">
+  <div class="bg-glow"></div>
+  <div class="ring ring-1"></div>
+  <div class="ring ring-2"></div>
+  <div class="ring ring-3"></div>
+</div>
+
+<div class="page">
+  <nav class="nav">
+    <div class="nav-brand">
+      <div class="nav-mark"><img src="../icons/icon48.png" alt="TokenPulse"></div>
+      <span class="nav-name">TokenPulse</span>
+      <span class="nav-alpha">alpha</span>
+    </div>
+    <a class="store-link" href="https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic" target="_blank">Web Store ↗</a>
+  </nav>
+
+  <div class="center">
+    <div class="wrap">
+
+      <div id="form-state">
+        <div class="eyebrow-row">
+          <div class="eyebrow-dot"></div>
+          <span class="eyebrow-text">Support</span>
         </div>
-        <span class="brand-name">TokenPulse</span>
+        <h1>Need a <em>hand?</em></h1>
+        <p class="sub">Bug, feature request, anything TokenPulse-related. We read every message and usually reply within 24 hours.</p>
+
+        <div class="card">
+          <div class="field">
+            <div class="field-label">Your email (optional)</div>
+            <input type="email" id="email" placeholder="you@example.com">
+          </div>
+
+          <div class="field">
+            <div class="field-label">Type</div>
+            <select id="type">
+              <option value="bug">Bug report</option>
+              <option value="feature">Feature request</option>
+              <option value="other">Something else</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="field-label">Message</div>
+            <textarea id="message" placeholder="What happened? If reporting a bug, include what you expected vs what you saw."></textarea>
+          </div>
+
+          <button class="submit-btn" id="submit-btn">Send feedback <span>→</span></button>
+        </div>
+
+        <p class="footer-note">
+          You can also email <a href="mailto:anup17508@gmail.com">anup17508@gmail.com</a> directly,
+          or visit the <a href="https://anu-ship-it.github.io/TokenPulse" target="_blank">marketing site</a>.
+        </p>
       </div>
-      <a href="https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic" class="back-link" target="_blank">← Web Store</a>
-    </div>
 
-    <div id="form-state">
-      <div class="label-eyebrow">Support</div>
-      <h1>Need a <span>hand?</span></h1>
-      <p class="intro">
-        Bug, feature request, anything TokenPulse-related. We read every message and usually reply within 24 hours.
-      </p>
-
-      <div class="card">
-        <div class="field">
-          <div class="field-label">Your Email (optional)</div>
-          <input type="email" id="email" placeholder="you@example.com">
-        </div>
-
-        <div class="field">
-          <div class="field-label">Type</div>
-          <select id="type">
-            <option value="bug">Bug report</option>
-            <option value="feature">Feature request</option>
-            <option value="other">Something else</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <div class="field-label">Message</div>
-          <textarea id="message" placeholder="What happened? If reporting a bug, include what you expected vs what you saw."></textarea>
-        </div>
-
-        <button class="submit-btn" id="submit-btn">
-          Send feedback
-          <span>→</span>
-        </button>
+      <div class="success" id="success-state">
+        <div class="success-icon-wrap"><div class="success-icon-dot"></div></div>
+        <h2>Thanks — message sent.</h2>
+        <p>We read every message and usually reply within 24 hours.</p>
       </div>
 
-      <p class="footer-note">
-        You can also email <a href="mailto:anup17508@gmail.com">anup17508@gmail.com</a> directly,
-        or visit the <a href="https://anu-ship-it.github.io/TokenPulse" target="_blank">marketing site</a>.
-      </p>
-    </div>
-
-    <div class="success" id="success-state">
-      <div class="success-icon">🙏</div>
-      <div class="success-title">Thanks — message sent.</div>
-      <div class="success-sub">We read every message and usually reply within 24 hours.</div>
-    </div>
-
-    <div class="meta-row">
-      Built by Anoop Kumar and Mansi Rathore · Alpha
     </div>
   </div>
 
-  <script>
-    document.getElementById("submit-btn").addEventListener("click", async () => {
-      const email   = document.getElementById("email").value;
-      const type    = document.getElementById("type").value;
-      const message = document.getElementById("message").value;
-      const btn     = document.getElementById("submit-btn");
+  <div class="byline">
+    <div class="byline-text">Built by <span>Anoop Kumar &amp; Mansi Rathore</span> · local-only · no servers · no tracking</div>
+  </div>
+</div>
 
-      if (!message.trim()) {
-        document.getElementById("message").style.borderColor = "#ef4444";
-        return;
-      }
+<script>
+document.getElementById("submit-btn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value;
+  const type = document.getElementById("type").value;
+  const message = document.getElementById("message").value;
+  const btn = document.getElementById("submit-btn");
 
-      btn.disabled = true;
-      btn.textContent = "Sending...";
+  if (!message.trim()) {
+    document.getElementById("message").style.borderColor = "#FF6B6B";
+    return;
+  }
 
-      try {
-        const res = await fetch("https://formspree.io/f/xqeoqzdg", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Accept": "application/json" },
-          body: JSON.stringify({
-            email: email || "not provided",
-            type,
-            message,
-            source: "support_page",
-          }),
-        });
+  btn.disabled = true;
+  btn.textContent = "Sending...";
 
-        if (res.ok) {
-          document.getElementById("form-state").style.display = "none";
-          document.getElementById("success-state").style.display = "block";
-        } else {
-          btn.disabled = false;
-          btn.textContent = "Send feedback →";
-        }
-      } catch (_) {
-        btn.disabled = false;
-        btn.textContent = "Send feedback →";
-      }
+  try {
+    const res = await fetch("https://formspree.io/f/xqeoqzdg", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({
+        email: email || "not provided",
+        type,
+        message,
+        source: "support_page",
+      }),
     });
-  </script>
+
+    if (res.ok) {
+      document.getElementById("form-state").style.display = "none";
+      document.getElementById("success-state").style.display = "block";
+    } else {
+      btn.disabled = false;
+      btn.textContent = "Send feedback →";
+    }
+  } catch (_) {
+    btn.disabled = false;
+    btn.textContent = "Send feedback →";
+  }
+});
+</script>
 </body>
 </html>
