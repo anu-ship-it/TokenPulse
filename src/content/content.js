@@ -405,8 +405,8 @@
   // ── Boot ───────────────────────────────────────────────────────
   function init() {
     injectBar();
-    startObserver();
     startResponseReadyDetector();
+    startObserver();
     onResponseReady();
     watchSession();
     setTimeout(scan, 800);

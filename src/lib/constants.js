@@ -60,6 +60,7 @@ const TT = {
     notify_75:       true,
     notify_90:       true,
     notify_100:      true,
+    notify_response_ready: true,
     refresh_minutes: 5,
     show_bar:        true,
   },

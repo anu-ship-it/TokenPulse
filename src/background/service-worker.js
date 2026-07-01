@@ -23,7 +23,7 @@ async function setupAlarm() {
   await chrome.alarms.clearAll();
   chrome.alarms.create(TT.ALARM, {
     periodInMinutes: mins,
-    delayInMinutes:  0.1,
+    delayInMinutes: 0.1,
   });
 }
 
@@ -85,6 +85,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse({ ok: true });
         break;
       }
+
+      case "RESPONSE_READY": {
+        const settings = await Storage.getSettings();
+        if (settings.notify_response_ready === false) break;
+
+        chrome.notifications.create("tt_response_ready", {
+          type: "basic",
+          iconUrl: ICON,
+          title: `${msg.platformName} — Response ready`,
+          message: "Your response has finished generating. Switch back to continue.",
+          priority: 1,
+        });
+        break;
+      }
     }
   })();
   return true;
@@ -93,9 +107,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // ── Notification helper ────────────────────────────────────────────
 function notify(id, title, message, priority) {
   chrome.notifications.create(id, {
-    type:     "basic",
-    iconUrl:  ICON,
-    title:    `TokenPulse — ${title}`,
+    type: "basic",
+    iconUrl: ICON,
+    title: `TokenPulse — ${title}`,
     message,
     priority: priority || 1,
   });
@@ -108,18 +122,18 @@ const THRESHOLDS = [50, 75, 90, 100];
 
 async function shouldNotify(stateKey, currentPct, settings) {
   const enabled = THRESHOLDS.filter(t => {
-    if (t === 50)  return settings.notify_50;
-    if (t === 75)  return settings.notify_75;
-    if (t === 90)  return settings.notify_90;
+    if (t === 50) return settings.notify_50;
+    if (t === 75) return settings.notify_75;
+    if (t === 90) return settings.notify_90;
     if (t === 100) return settings.notify_100;
     return false;
   });
 
   if (enabled.length === 0) return null;
 
-  const crossed     = enabled.filter(t => currentPct >= t).pop() || 0;
+  const crossed = enabled.filter(t => currentPct >= t).pop() || 0;
   const lastNotified = await Storage.getLastNotified();
-  const last        = lastNotified[stateKey] || 0;
+  const last = lastNotified[stateKey] || 0;
 
   // Reset if dropped below all thresholds
   if (crossed === 0 && last > 0) {
@@ -138,23 +152,23 @@ async function shouldNotify(stateKey, currentPct, settings) {
 
 // ── Claude rate limit notifications ───────────────────────────────
 async function checkRateLimitNotifications(usage) {
-  const settings   = await Storage.getSettings();
+  const settings = await Storage.getSettings();
   const sessionPct = usage.five_hour?.utilization || 0;
-  const weeklyPct  = usage.seven_day?.utilization  || 0;
-  const maxPct     = Math.max(sessionPct, weeklyPct);
+  const weeklyPct = usage.seven_day?.utilization || 0;
+  const maxPct = Math.max(sessionPct, weeklyPct);
 
   const threshold = await shouldNotify("claude_rate", maxPct, settings);
   if (!threshold) return;
 
   const isSession = sessionPct >= weeklyPct;
-  const pct       = Math.round(isSession ? sessionPct : weeklyPct);
+  const pct = Math.round(isSession ? sessionPct : weeklyPct);
   const limitType = isSession ? "5-hour session" : "7-day weekly";
-  const priority  = threshold >= 90 ? 2 : 1;
+  const priority = threshold >= 90 ? 2 : 1;
 
   const tips = {
-    50:  "You're halfway through your Claude limit.",
-    75:  "Only 25% of your Claude limit remaining.",
-    90:  "Almost out — consider wrapping up soon.",
+    50: "You're halfway through your Claude limit.",
+    75: "Only 25% of your Claude limit remaining.",
+    90: "Almost out — consider wrapping up soon.",
     100: "Limit reached. Usage will be restricted.",
   };
 
@@ -170,9 +184,9 @@ async function checkRateLimitNotifications(usage) {
 // Fires immediately on every scan — no timer delay
 async function checkContextNotifications(platform, used, limit) {
   if (!used || !limit) return;
-  const settings  = await Storage.getSettings();
-  const pct       = Math.round((used / limit) * 100);
-  const name      = platform === "claude" ? "Claude" : "ChatGPT";
+  const settings = await Storage.getSettings();
+  const pct = Math.round((used / limit) * 100);
+  const name = platform === "claude" ? "Claude" : "ChatGPT";
   const remaining = Math.round((limit - used) / 1000);
 
   const threshold = await shouldNotify(`ctx_${platform}`, pct, settings);
@@ -181,9 +195,9 @@ async function checkContextNotifications(platform, used, limit) {
   const priority = threshold >= 90 ? 2 : 1;
 
   const messages = {
-    50:  `~${remaining}k tokens remaining. You're halfway through this conversation's context.`,
-    75:  `~${remaining}k tokens remaining. Consider starting a new chat soon.`,
-    90:  `~${remaining}k tokens remaining. Context window nearly full — start a new chat.`,
+    50: `~${remaining}k tokens remaining. You're halfway through this conversation's context.`,
+    75: `~${remaining}k tokens remaining. Consider starting a new chat soon.`,
+    90: `~${remaining}k tokens remaining. Context window nearly full — start a new chat.`,
     100: `Context window full. The model may lose earlier parts of your conversation.`,
   };
 

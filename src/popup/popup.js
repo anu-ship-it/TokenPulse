@@ -444,12 +444,13 @@ function renderSettings(state) {
 
     document.getElementById("save-btn").addEventListener("click", async () => {
       const settings = {
-        notify_50:       document.getElementById("n50").checked,
-        notify_75:       document.getElementById("n75").checked,
-        notify_90:       document.getElementById("n90").checked,
-        notify_100:      document.getElementById("n100").checked,
-        show_bar:        document.getElementById("show_bar").checked,
-        refresh_minutes: parseInt(document.getElementById("refresh").value, 10),
+        notify_50:             document.getElementById("n50").checked,
+        notify_75:             document.getElementById("n75").checked,
+        notify_90:             document.getElementById("n90").checked,
+        notify_100:            document.getElementById("n100").checked,
+        notify_response_ready: document.getElementById("n_response").checked,
+        show_bar:              document.getElementById("show_bar").checked,
+        refresh_minutes:       parseInt(document.getElementById("refresh").value, 10),
       };
       await chrome.runtime.sendMessage({ type: "SAVE_SETTINGS", settings });
       const msg = document.getElementById("saved-msg");
