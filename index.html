@@ -1,873 +1,713 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="TokenPulse tracks your token usage and rate limits in real time on Claude and ChatGPT. Live token bar, smart notifications, daily history. Free Chrome extension.">
-  <meta property="og:title" content="TokenPulse — Token & Rate Limit Tracker">
-  <meta property="og:description" content="Never get cut off mid-conversation again. Live token tracking for Claude and ChatGPT.">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-  <title>TokenPulse — Token & Rate Limit Tracker for Claude & ChatGPT</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TokenPulse — Live Token Tracker for Claude, ChatGPT, Gemini & DeepSeek</title>
+<meta name="description" content="TokenPulse puts a live token bar inside Claude, ChatGPT, Gemini and DeepSeek. Real rate limits, smart notifications, daily history. Free Chrome extension. No API key.">
+<meta property="og:title" content="TokenPulse — Live Token & Rate Limit Tracker">
+<meta property="og:description" content="Never get cut off mid-conversation. Live token tracking across Claude, ChatGPT, Gemini and DeepSeek. Free. No API key.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bg:        #080808;
-      --bg2:       #111111;
-      --bg3:       #161616;
-      --border:    #1e1e1e;
-      --border2:   #4a9ba5;
-      --teal:      #06b6d4;
-      --teal-light:#67e8f9;
-      --teal-dim:  #4a9ba5;
-      --teal-muted:#1e1e1e;
-      --text:      #e0f7fa;
-      --text-dim:  #4a9ba5;
-      --text-muted:#333333;
-      --yellow:    #f59e0b;
-      --red:       #ef4444;
-      --white:     #ffffff;
-      --font:      -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
+:root {
+  --bg:   #090909;
+  --s1:   #0F0F12;
+  --s2:   #161618;
+  --s3:   #1E1E22;
+  --b:    rgba(255,255,255,0.05);
+  --bm:   rgba(255,255,255,0.08);
+  --t:    #EDEEF0;
+  --t2:   #7A7A8C;
+  --t3:   #36364A;
+  --live: #00E5A0;
+  --ld:   rgba(0,229,160,0.08);
+  --lb:   rgba(0,229,160,0.18);
+  --acc:  #6C5FFF;
+  --ad:   rgba(108,95,255,0.10);
+  --ab:   rgba(108,95,255,0.22);
+}
 
-    html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  background: var(--bg); color: var(--t);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-      line-height: 1.6;
-    }
+/* ── AMBIENT ── */
+.amb { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.amb-glow {
+  position: absolute; top: -300px; left: 50%; transform: translateX(-50%);
+  width: 900px; height: 900px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(108,95,255,0.05) 0%, transparent 60%);
+}
+.amb-ring { position: absolute; border-radius: 50%; top: -200px; left: 50%; transform: translateX(-50%); border: 1px solid rgba(108,95,255,0.06); }
+.ar1 { width: 500px;  height: 500px; }
+.ar2 { width: 800px;  height: 800px; border-color: rgba(108,95,255,0.035); }
+.ar3 { width: 1100px; height: 1100px; border-color: rgba(108,95,255,0.02); }
 
-    /* ── Nav ──────────────────────────────────── */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 16px 40px;
-      background: rgba(8,8,9,.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border2);
-    }
-    .nav-logo {
-      display: flex; align-items: center; gap: 10px;
-      text-decoration: none;
-    }
-    .nav-logo-icon {
-      width: 32px; height: 32px; border-radius: 9px;
-      background: var(--bg2); border: 1.5px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .nav-logo-name {
-      font-size: 15px; font-weight: 700;
-      color: var(--teal-light); letter-spacing: .01em;
-    }
-    .nav-links {
-      display: flex; align-items: center; gap: 28px;
-      list-style: none;
-    }
-    .nav-links a {
-      font-size: 13px; color: var(--teal-dim);
-      text-decoration: none; transition: color .15s;
-    }
-    .nav-links a:hover { color: var(--teal-light); }
-    .nav-cta {
-      font-size: 12px; font-weight: 700;
-      padding: 8px 18px; border-radius: 8px;
-      background: rgba(6,182,212,.1);
-      color: var(--teal); border: 1px solid rgba(6,182,212,.25);
-      text-decoration: none; transition: background .15s;
-      white-space: nowrap;
-    }
-    .nav-cta:hover { background: rgba(6,182,212,.2); }
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 15px 48px;
+  background: rgba(9,9,9,0.88); backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--b);
+}
+.nb { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.nb-logo { width: 28px; height: 28px; border-radius: 7px; background: var(--s2); border: 1px solid var(--ab); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.nb-logo img { width: 22px; height: 22px; display: block; }
+.nb-name { font-size: 14px; font-weight: 700; color: var(--t); letter-spacing: -0.3px; }
+.nb-tag { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 600; color: var(--acc); background: var(--ad); border: 1px solid var(--ab); padding: 2px 6px; border-radius: 4px; }
+.nl { display: flex; gap: 28px; }
+.nl a { font-size: 13px; color: var(--t2); text-decoration: none; transition: color 0.15s; }
+.nl a:hover { color: var(--t); }
+.n-cta { background: var(--acc); color: #fff; padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.15s ease; }
+.n-cta:hover { background: #7D71FF; transform: translateY(-1px); }
 
-    /* ── Hero ─────────────────────────────────── */
-    .hero {
-      min-height: 100vh;
-      display: flex; align-items: center;
-      padding: 120px 40px 80px;
-      position: relative; overflow: hidden;
-    }
-    .hero::before {
-      content: "";
-      position: absolute; top: -200px; left: 50%;
-      transform: translateX(-50%);
-      width: 800px; height: 800px;
-      background: radial-gradient(circle, rgba(6,182,212,.06) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .hero-inner {
-      max-width: 1100px; margin: 0 auto; width: 100%;
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 64px; align-items: center;
-    }
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 11px; font-weight: 700; letter-spacing: .1em;
-      color: var(--teal); text-transform: uppercase;
-      background: rgba(6,182,212,.08);
-      border: 1px solid rgba(6,182,212,.2);
-      padding: 4px 12px; border-radius: 20px;
-      margin-bottom: 20px;
-    }
-    .hero-badge-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--teal);
-      animation: pulse-dot 2s ease-in-out infinite;
-    }
-    @keyframes pulse-dot {
-      0%,100% { opacity: 1; transform: scale(1); }
-      50%      { opacity: .5; transform: scale(.8); }
-    }
-    h1 {
-      font-size: clamp(36px, 5vw, 52px);
-      font-weight: 800; line-height: 1.1;
-      letter-spacing: -.03em; margin-bottom: 20px;
-      color: var(--text);
-    }
-    h1 span { color: var(--teal); }
-    .hero-sub {
-      font-size: 17px; color: var(--teal-dim);
-      line-height: 1.65; margin-bottom: 36px;
-      max-width: 440px;
-    }
-    .hero-sub strong { color: var(--teal-light); font-weight: 600; }
-    .hero-actions { display: flex; flex-direction: column; gap: 12px; }
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 10px;
-      padding: 14px 28px; border-radius: 10px;
-      background: var(--teal); color: var(--bg);
-      font-size: 14px; font-weight: 700;
-      text-decoration: none; border: none; cursor: pointer;
-      transition: opacity .15s, transform .15s;
-      width: fit-content;
-    }
-    .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
-    .btn-primary:active { transform: scale(.97); }
-    .btn-primary svg { width: 18px; height: 18px; flex-shrink: 0; }
-    .hero-note {
-      font-size: 11px; color: var(--text-muted);
-      display: flex; align-items: center; gap: 6px;
-    }
-    .hero-note::before { content: "✓"; color: var(--teal-muted); font-weight: 700; }
+/* ── HERO ── */
+.hero-wrap {
+  position: relative; z-index: 1;
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center;
+  padding: 130px 48px 90px;
+  gap: 80px; min-height: 100vh;
+}
+.hl { flex: 1; max-width: 560px; }
+.h-eye { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; }
+.h-eye-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--live); box-shadow: 0 0 6px rgba(0,229,160,0.5); animation: blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+.h-eye-txt { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: var(--live); letter-spacing: 0.8px; text-transform: uppercase; }
+.h1 { font-size: clamp(40px, 5vw, 64px); font-weight: 700; line-height: 1.05; letter-spacing: -2px; color: var(--t); margin-bottom: 22px; }
+.h1 em { font-style: normal; color: var(--live); }
+.h-sub { font-size: 17px; color: var(--t2); line-height: 1.7; margin-bottom: 36px; max-width: 460px; }
+.h-sub strong { color: var(--t); font-weight: 600; }
+.h-cta-row { display: flex; align-items: center; gap: 16px; margin-bottom: 40px; }
+.btn-main { display: inline-flex; align-items: center; gap: 8px; background: var(--acc); color: #fff; padding: 13px 24px; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; transition: all 0.15s ease; letter-spacing: -0.2px; border: none; cursor: pointer; font-family: inherit; }
+.btn-main:hover { background: #7D71FF; transform: translateY(-1px); }
+.h-cta-note { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--t3); line-height: 1.7; }
+.h-plats { display: flex; flex-wrap: wrap; gap: 8px; }
+.h-plat { display: flex; align-items: center; gap: 6px; background: var(--s1); border: 1px solid var(--bm); border-radius: 20px; padding: 6px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--t2); }
+.h-plat-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--live); box-shadow: 0 0 4px rgba(0,229,160,0.5); }
 
-    /* Email form */
-    .notify-form {
-      display: flex; gap: 8px; max-width: 380px;
-    }
-    .notify-input {
-      flex: 1; padding: 10px 14px;
-      background: var(--bg2); color: var(--text);
-      border: 1px solid var(--border); border-radius: 8px;
-      font-size: 13px; font-family: var(--font);
-      outline: none; transition: border-color .15s;
-    }
-    .notify-input::placeholder { color: var(--text-muted); }
-    .notify-input:focus { border-color: var(--teal); }
-    .notify-btn {
-      padding: 10px 18px; border-radius: 8px;
-      background: rgba(6,182,212,.1);
-      color: var(--teal); border: 1px solid rgba(6,182,212,.25);
-      font-size: 12px; font-weight: 700;
-      cursor: pointer; font-family: var(--font);
-      transition: background .15s; white-space: nowrap;
-    }
-    .notify-btn:hover { background: rgba(6,182,212,.2); }
-    .notify-label {
-      font-size: 11px; color: var(--text-muted); margin-bottom: 6px;
-    }
-    .notify-success {
-      font-size: 12px; color: var(--teal);
-      display: none; padding: 10px 0;
-    }
+/* ── POPUP MOCKUP — PEEK + HOVER REVEAL ── */
+.hr { flex-shrink: 0; position: relative; }
 
-    /* Hero visual */
-    .hero-visual {
-      display: flex; justify-content: center; align-items: center;
-      position: relative;
-    }
-    .hero-visual::before {
-      content: "";
-      position: absolute; inset: -40px;
-      background: radial-gradient(circle, rgba(6,182,212,.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .popup-mockup {
-      width: 280px;
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 16px; overflow: hidden;
-      box-shadow: 0 32px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(6,182,212,.1);
-      position: relative; z-index: 1;
-    }
-    .pm-header {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 12px 14px; border-bottom: 1px solid var(--border2);
-    }
-    .pm-logo-row { display: flex; align-items: center; gap: 8px; }
-    .pm-logo {
-      width: 22px; height: 22px; border-radius: 6px;
-      background: var(--bg); border: 1.5px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .pm-name { font-size: 12px; font-weight: 700; color: var(--teal-light); }
-    .pm-badge {
-      font-size: 9px; font-weight: 700; padding: 2px 8px;
-      border-radius: 20px; background: rgba(6,182,212,.12); color: var(--teal);
-    }
-    .pm-section { padding: 12px 14px; border-bottom: 1px solid var(--border2); }
-    .pm-section-title {
-      font-size: 8px; font-weight: 700; letter-spacing: .12em;
-      color: var(--teal-muted); text-transform: uppercase; margin-bottom: 10px;
-    }
-    .pm-big-num { font-size: 28px; font-weight: 800; color: var(--teal); letter-spacing: -.03em; }
-    .pm-meta { font-size: 10px; color: var(--teal-dim); margin-top: 2px; margin-bottom: 8px; }
-    .pm-bar-track { width: 100%; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-    .pm-bar-fill  { height: 100%; border-radius: 2px; background: var(--teal); }
-    .pm-row {
-      display: flex; align-items: center;
-      justify-content: space-between; padding: 9px 0;
-    }
-    .pm-row + .pm-row { border-top: 1px solid var(--border2); }
-    .pm-row-name { font-size: 11px; font-weight: 600; color: #4a9ba5; }
-    .pm-row-sub  { font-size: 9px; color: var(--teal-muted); margin-top: 1px; }
-    .pm-row-pct  { font-size: 13px; font-weight: 800; }
-    .pm-row-mini { width: 60px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; margin-top: 4px; }
-    .pm-row-mini-fill { height: 100%; border-radius: 1px; }
-    .pm-footer {
-      display: flex; align-items: center;
-      justify-content: space-between; padding: 10px 14px;
-    }
-    .pm-footer-note { font-size: 9px; color: var(--text-muted); }
-    .pm-new-chat {
-      font-size: 9px; font-weight: 700; padding: 5px 12px;
-      border-radius: 6px; background: rgba(6,182,212,.08);
-      color: var(--teal); border: 1px solid rgba(6,182,212,.2);
-    }
+/* Container clips the bottom so only top portion shows at rest */
+.popup-clip {
+  width: 300px;
+  height: 280px; /* shows roughly top 60% at rest */
+  overflow: hidden;
+  position: relative;
+  border-radius: 14px;
+  transition: height 0.5s cubic-bezier(0.22,1,0.36,1);
+  cursor: pointer;
+}
+.hr:hover .popup-clip { height: 560px; } /* full height on hover */
 
-    /* Bar mockup */
-    .bar-mockup {
-      position: absolute; bottom: -24px; left: -20px;
-      width: 240px;
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 6px 10px;
-      display: flex; align-items: center; gap: 8px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.4);
-    }
-    .bm-label { font-size: 8px; font-weight: 700; letter-spacing: .1em; color: var(--teal-muted); }
-    .bm-track { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-    .bm-fill  { height: 100%; width: 17%; background: var(--teal); border-radius: 2px; }
-    .bm-count { font-size: 10px; font-weight: 600; color: var(--teal); white-space: nowrap; }
+/* Fade mask at bottom when peeking */
+.popup-mask {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+  background: linear-gradient(to bottom, transparent, #090909);
+  pointer-events: none; z-index: 2;
+  transition: opacity 0.4s ease;
+}
+.hr:hover .popup-mask { opacity: 0; }
 
-    /* ── Platforms ────────────────────────────── */
-    .platforms {
-      padding: 0 40px 80px;
-      display: flex; justify-content: center;
-    }
-    .platforms-inner {
-      max-width: 600px; width: 100%;
-      display: flex; align-items: center;
-      gap: 12px; flex-wrap: wrap; justify-content: center;
-    }
-    .platform-pill {
-      display: flex; align-items: center; gap: 8px;
-      padding: 10px 20px; border-radius: 30px;
-      background: var(--bg2); border: 1px solid var(--border);
-      font-size: 13px; font-weight: 600; color: var(--teal);
-    }
-    .platform-pill-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--teal);
-    }
-    .platforms-divider { font-size: 12px; color: var(--text-muted); }
+/* Hover hint label */
+.popup-hint {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600; color: var(--acc);
+  background: var(--ad); border: 1px solid var(--ab);
+  padding: 4px 12px; border-radius: 20px; white-space: nowrap;
+  z-index: 3; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.hr:hover .popup-hint { opacity: 0; }
 
-    /* ── Section shared ───────────────────────── */
-    section { padding: 80px 40px; }
-    .section-inner { max-width: 1100px; margin: 0 auto; }
-    .section-label {
-      font-size: 10px; font-weight: 700; letter-spacing: .14em;
-      color: var(--teal); text-transform: uppercase; margin-bottom: 12px;
-    }
-    h2 {
-      font-size: clamp(28px, 4vw, 40px);
-      font-weight: 800; line-height: 1.15;
-      letter-spacing: -.025em; margin-bottom: 14px;
-    }
-    h2 span { color: var(--teal); }
-    .section-sub {
-      font-size: 15px; color: var(--teal-dim);
-      max-width: 520px; line-height: 1.65; margin-bottom: 48px;
-    }
+/* Actual popup card */
+.popup {
+  width: 300px;
+  background: #080808;
+  border: 1px solid #1a1a1a;
+  border-radius: 14px; overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.03);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.p-hd { display: flex; align-items: center; justify-content: space-between; padding: 11px 13px 10px; border-bottom: 1px solid #131313; }
+.p-hdl { display: flex; align-items: center; gap: 8px; }
+.p-logo { width: 22px; height: 22px; border-radius: 6px; overflow: hidden; border: 1px solid rgba(108,95,255,0.3); }
+.p-logo img { width: 100%; height: 100%; display: block; }
+.p-appname { font-size: 12px; font-weight: 600; color: #c0c0c0; }
+.p-hdr { display: flex; align-items: center; gap: 6px; }
+.p-dot { width: 6px; height: 6px; border-radius: 50%; background: #00E5A0; box-shadow: 0 0 5px rgba(0,229,160,0.5); animation: blink 2s infinite; }
+.p-badge { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; background: rgba(232,137,74,0.15); color: #e8894a; }
+.p-icons { display: flex; gap: 2px; }
+.p-ic { font-size: 12px; color: #555; padding: 2px 3px; }
 
-    /* ── Features grid ────────────────────────── */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-    .feature-card {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 14px; padding: 24px;
-      transition: border-color .2s, transform .2s;
-    }
-    .feature-card:hover { border-color: rgba(6,182,212,.3); transform: translateY(-2px); }
-    .feature-icon {
-      width: 40px; height: 40px; border-radius: 10px;
-      background: rgba(6,182,212,.08); border: 1px solid rgba(6,182,212,.15);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; margin-bottom: 14px;
-    }
-    .feature-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-    .feature-desc  { font-size: 12px; color: var(--teal-dim); line-height: 1.6; }
-    .feature-tag {
-      display: inline-block; margin-top: 10px;
-      font-size: 10px; font-weight: 700; letter-spacing: .06em;
-      padding: 2px 8px; border-radius: 4px;
-      background: rgba(6,182,212,.08); color: var(--teal);
-    }
-    .feature-tag.both { background: rgba(103,232,249,.06); color: var(--teal-light); }
+.p-sec { padding: 11px 13px 10px; border-bottom: 1px solid #0f0f0f; }
+.p-stitle { font-size: 8px; font-weight: 700; letter-spacing: 0.12em; color: #888; text-transform: uppercase; margin-bottom: 9px; }
+.p-ctx-lbl { font-size: 8px; color: #aaa; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+.p-ctx-hero { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 3px; }
+.p-ctx-val { font-size: 28px; font-weight: 800; color: #06b6d4; line-height: 1; letter-spacing: -0.03em; }
+.p-ctx-lim { font-size: 10px; color: #333; padding-bottom: 3px; }
+.p-ctx-meta { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.p-ctx-meta span { font-size: 10px; color: #888; }
+.p-ctx-meta .rem { font-weight: 600; color: #e0e0e0; }
+.p-bar { height: 3px; background: #333; border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+.p-bar-fill { height: 100%; border-radius: 2px; }
+.p-bar-ft { display: flex; justify-content: space-between; }
+.p-bar-ft span { font-size: 8px; color: #555; }
+.p-bar-status { font-size: 8px; font-weight: 800; letter-spacing: 0.1em; color: #06b6d4; }
 
-    /* ── Compare ──────────────────────────────── */
-    .compare-section { background: var(--bg2); border-top: 1px solid var(--border2); border-bottom: 1px solid var(--border2); }
-    .compare-grid {
-      display: grid; grid-template-columns: 2fr 1fr 1fr;
-      gap: 0; border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
-    }
-    .compare-header {
-      padding: 14px 20px;
-      background: var(--bg3); border-bottom: 1px solid var(--border);
-      font-size: 11px; font-weight: 700; letter-spacing: .06em;
-      color: var(--teal-dim); text-transform: uppercase;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .compare-header.ours { color: var(--teal-light); }
-    .compare-row {
-      display: contents;
-    }
-    .compare-cell {
-      padding: 13px 20px;
-      border-bottom: 1px solid var(--border2);
-      font-size: 13px; color: var(--teal-dim);
-      display: flex; align-items: center;
-    }
-    .compare-cell:nth-child(3n+2),
-    .compare-cell:nth-child(3n+3) {
-      justify-content: center;
-      border-left: 1px solid var(--border2);
-    }
-    .compare-cell.feature-name { font-weight: 500; color: #4a9ba5; }
-    .check { color: var(--teal); font-size: 15px; font-weight: 700; }
-    .cross { color: var(--text-muted); font-size: 13px; }
-    .ours-col { background: rgba(6,182,212,.03); }
+.p-card { background: #0d0d0d; border: 1px solid #161616; border-radius: 8px; overflow: hidden; }
+.p-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 11px; }
+.p-row + .p-row { border-top: 1px solid #131313; }
+.p-rn { font-size: 11px; font-weight: 600; color: #aaa; margin-bottom: 2px; }
+.p-rs { font-size: 9px; color: #555; }
+.p-rv { font-size: 13px; font-weight: 800; color: #06b6d4; }
+.p-rl-r { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.p-rl-pct { font-size: 13px; font-weight: 800; }
+.p-mini { width: 70px; height: 2px; background: #2a2a2a; border-radius: 1px; overflow: hidden; }
+.p-mini-f { height: 100%; border-radius: 1px; }
 
-    /* ── Tips ─────────────────────────────────── */
-    .tips-tabs {
-      display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap;
-    }
-    .tips-tab {
-      padding: 7px 18px; border-radius: 20px;
-      font-size: 12px; font-weight: 600;
-      background: var(--bg2); border: 1px solid var(--border);
-      color: var(--teal-dim); cursor: pointer; transition: all .15s;
-    }
-    .tips-tab.active {
-      background: rgba(6,182,212,.1);
-      border-color: rgba(6,182,212,.3); color: var(--teal);
-    }
-    .tips-panel { display: none; }
-    .tips-panel.active { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-    .tip-card {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 12px; padding: 18px 20px;
-    }
-    .tip-num {
-      font-size: 10px; font-weight: 800; color: var(--teal-muted);
-      letter-spacing: .1em; margin-bottom: 8px;
-    }
-    .tip-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-    .tip-body  { font-size: 12px; color: var(--teal-dim); line-height: 1.6; }
-    .tip-prompt {
-      margin-top: 10px; padding: 10px 12px;
-      background: var(--bg3); border: 1px solid var(--border2);
-      border-radius: 7px; font-size: 11px;
-      color: var(--teal-light); font-family: 'SF Mono', monospace;
-      line-height: 1.6;
-    }
+.p-ft { display: flex; align-items: center; justify-content: space-between; padding: 9px 13px; }
+.p-ft-meta { display: flex; align-items: center; gap: 4px; }
+.p-ft-ml { font-size: 9px; color: #4a9ba5; background: none; border: none; cursor: pointer; padding: 0; }
+.p-ft-dot { font-size: 9px; color: #222; }
+.p-nc { font-size: 9px; font-weight: 700; padding: 5px 12px; border-radius: 6px; background: rgba(34,197,94,0.08); color: #06b6d4; border: 1px solid rgba(34,197,94,0.2); }
 
-    /* ── About ────────────────────────────────── */
-    .about-section { border-top: 1px solid var(--border2); }
-    .about-card {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 16px; padding: 40px;
-      display: flex; align-items: center; gap: 32px;
-    }
-    .about-avatar {
-      width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0;
-      background: var(--bg3); border: 2px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 28px; font-weight: 800; color: var(--teal);
-    }
-    .about-name { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-    .about-role { font-size: 12px; color: var(--teal); margin-bottom: 10px; }
-    .about-bio  { font-size: 13px; color: var(--teal-dim); line-height: 1.65; max-width: 500px; }
+.p-float {
+  position: absolute; bottom: -14px; right: -18px;
+  background: var(--s1); border: 1px solid var(--lb);
+  border-radius: 10px; padding: 9px 13px;
+  display: flex; align-items: center; gap: 7px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 4;
+}
+.pf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--live); box-shadow: 0 0 5px rgba(0,229,160,0.5); animation: blink 2s infinite; }
+.pf-txt { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: var(--live); }
 
-    /* ── CTA banner ───────────────────────────── */
-    .cta-banner {
-      margin: 0 40px 80px;
-      background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(103,232,249,.04));
-      border: 1px solid rgba(6,182,212,.2);
-      border-radius: 20px; padding: 56px 48px;
-      text-align: center;
-      position: relative; overflow: hidden;
-    }
-    .cta-banner::before {
-      content: "";
-      position: absolute; top: -100px; left: 50%;
-      transform: translateX(-50%);
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(6,182,212,.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .cta-banner h2 { margin-bottom: 12px; }
-    .cta-banner p { color: var(--teal-dim); margin-bottom: 28px; font-size: 15px; }
+/* ── NOTIFY STRIP ── */
+.notify-strip {
+  position: relative; z-index: 1;
+  border-top: 1px solid var(--b); border-bottom: 1px solid var(--b);
+  background: var(--s1);
+  padding: 28px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap;
+}
+.ns-left { max-width: 480px; }
+.ns-eye { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--acc); margin-bottom: 6px; }
+.ns-h { font-size: 18px; font-weight: 700; color: var(--t); letter-spacing: -0.3px; margin-bottom: 6px; }
+.ns-sub { font-size: 13px; color: var(--t2); line-height: 1.55; }
+.ns-form { display: flex; gap: 8px; flex-shrink: 0; }
+.ns-input {
+  padding: 11px 16px; border-radius: 9px;
+  background: var(--s2); color: var(--t);
+  border: 1px solid var(--bm); font-size: 13px;
+  font-family: 'Space Grotesk', sans-serif;
+  outline: none; width: 240px;
+  transition: border-color 0.15s;
+}
+.ns-input::placeholder { color: var(--t3); }
+.ns-input:focus { border-color: var(--ab); }
+.ns-btn { padding: 11px 20px; border-radius: 9px; background: var(--acc); color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: all 0.15s; white-space: nowrap; }
+.ns-btn:hover { background: #7D71FF; }
+.ns-success { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--live); display: none; align-items: center; gap: 7px; padding: 11px 0; }
+.ns-success::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 6px rgba(0,229,160,0.5); flex-shrink: 0; }
 
-    /* ── Footer ───────────────────────────────── */
-    footer {
-      border-top: 1px solid var(--border2);
-      padding: 32px 40px;
-      display: flex; align-items: center;
-      justify-content: space-between; flex-wrap: wrap; gap: 12px;
-    }
-    .footer-left { font-size: 12px; color: var(--text-muted); }
-    .footer-left span { color: var(--teal-dim); }
-    .footer-links { display: flex; gap: 20px; }
-    .footer-links a { font-size: 12px; color: var(--text-muted); text-decoration: none; transition: color .15s; }
-    .footer-links a:hover { color: var(--teal); }
+/* ── SHARED SECTION ── */
+.wrap { max-width: 1100px; margin: 0 auto; }
+.sec { position: relative; z-index: 1; padding: 96px 48px; border-top: 1px solid var(--b); }
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--acc); margin-bottom: 14px; }
+.sh2 { font-size: clamp(28px, 3.5vw, 44px); font-weight: 700; line-height: 1.1; letter-spacing: -1px; color: var(--t); margin-bottom: 14px; }
+.sh2 em { font-style: normal; color: var(--live); }
+.ssub { font-size: 15px; color: var(--t2); line-height: 1.65; max-width: 480px; margin-bottom: 52px; }
 
-    /* ── Responsive ───────────────────────────── */
-    @media (max-width: 768px) {
-      nav { padding: 14px 20px; }
-      .nav-links { display: none; }
-      .hero { padding: 100px 20px 60px; }
-      .hero-inner { grid-template-columns: 1fr; gap: 48px; }
-      .hero-visual { order: -1; }
-      .bar-mockup { display: none; }
-      .platforms { padding: 0 20px 60px; }
-      section { padding: 60px 20px; }
-      .features-grid { grid-template-columns: 1fr; }
-      .compare-grid { grid-template-columns: 1.5fr 1fr 1fr; }
-      .tips-panel.active { grid-template-columns: 1fr; }
-      .about-card { flex-direction: column; padding: 28px; }
-      .cta-banner { margin: 0 20px 60px; padding: 40px 24px; }
-      footer { padding: 24px 20px; }
-    }
-  </style>
+/* ── FEATURES ── */
+.feat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--bm); border-radius: 16px; overflow: hidden; border: 1px solid var(--bm); }
+.fc { background: var(--s1); padding: 28px 24px; transition: background 0.2s; }
+.fc:hover { background: var(--s2); }
+.fc-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--ad); border: 1px solid var(--ab); display: flex; align-items: center; justify-content: center; font-size: 15px; margin-bottom: 16px; }
+.fc-title { font-size: 14px; font-weight: 700; color: var(--t); margin-bottom: 8px; letter-spacing: -0.2px; }
+.fc-body { font-size: 13px; color: var(--t2); line-height: 1.65; margin-bottom: 12px; }
+.fc-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; display: inline-block; padding: 2px 8px; border-radius: 4px; background: var(--ld); color: var(--live); border: 1px solid var(--lb); }
+.fc-tag.claude { background: var(--ad); color: var(--acc); border-color: var(--ab); }
+
+/* ── PLATFORMS ── */
+.plat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+.plat-card { background: var(--s1); border: 1px solid var(--bm); border-radius: 14px; padding: 24px 20px; display: flex; flex-direction: column; gap: 16px; }
+.plat-hd { display: flex; align-items: center; gap: 9px; }
+.plat-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 5px rgba(0,229,160,0.4); flex-shrink: 0; }
+.plat-name { font-size: 14px; font-weight: 700; color: var(--t); letter-spacing: -0.2px; }
+.plat-feats { display: flex; flex-direction: column; gap: 6px; }
+.pf-row { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--t2); }
+.pf-y { color: var(--live); font-size: 12px; flex-shrink: 0; }
+.pf-n { color: var(--t3); font-size: 11px; flex-shrink: 0; }
+.pf-nd { color: var(--t3); }
+.plat-bar { height: 2px; background: var(--s3); border-radius: 1px; overflow: hidden; margin-top: 4px; }
+.plat-bar-f { height: 100%; background: linear-gradient(90deg,#00b87a,var(--live)); border-radius: 1px; }
+
+/* ── COMPARE ── */
+.cmp-tbl { max-width: 720px; border: 1px solid var(--bm); border-radius: 14px; overflow: hidden; }
+.cmp-head { display: grid; grid-template-columns: 1fr 130px 130px; padding: 12px 20px; background: var(--s2); border-bottom: 1px solid var(--b); }
+.cmp-head span { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: 0.7px; text-align: center; }
+.cmp-head span:first-child { text-align: left; }
+.cmp-r { display: grid; grid-template-columns: 1fr 130px 130px; padding: 12px 20px; border-bottom: 1px solid var(--b); align-items: center; background: var(--s1); }
+.cmp-r:last-child { border-bottom: none; }
+.cmp-r:nth-child(even) { background: rgba(255,255,255,0.01); }
+.cmp-feat { font-size: 13px; color: var(--t2); }
+.cmp-cell { text-align: center; font-size: 14px; }
+.ck { color: var(--live); }
+.cx { color: var(--t3); font-size: 11px; }
+.ca { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--acc); background: var(--ad); border: 1px solid var(--ab); border-radius: 4px; padding: 2px 6px; display: inline-block; }
+
+/* ── ROADMAP ── */
+.road-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+.road-card { background: var(--s1); border: 1px solid var(--bm); border-radius: 14px; padding: 24px; }
+.road-ver { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: var(--acc); background: var(--ad); border: 1px solid var(--ab); display: inline-block; padding: 3px 8px; border-radius: 5px; margin-bottom: 14px; }
+.road-ver.current { color: var(--live); background: var(--ld); border-color: var(--lb); }
+.road-title { font-size: 14px; font-weight: 700; color: var(--t); margin-bottom: 14px; letter-spacing: -0.2px; }
+.road-items { display: flex; flex-direction: column; gap: 7px; }
+.road-item { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: var(--t2); line-height: 1.5; }
+.road-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--live); flex-shrink: 0; margin-top: 5px; }
+.road-sq  { width: 5px; height: 5px; border-radius: 1px; background: var(--acc); flex-shrink: 0; margin-top: 5px; }
+.road-dim { color: var(--t3); }
+.road-dim .road-sq { background: var(--t3); }
+
+/* ── ABOUT ── */
+.about-card { max-width: 560px; background: var(--s1); border: 1px solid var(--bm); border-radius: 16px; padding: 40px; }
+.about-av { width: 44px; height: 44px; border-radius: 11px; background: var(--ad); border: 1px solid var(--ab); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: var(--acc); margin-bottom: 18px; }
+.about-name { font-size: 14px; font-weight: 700; color: var(--t); margin-bottom: 3px; }
+.about-role { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--t3); margin-bottom: 20px; }
+.about-body { font-size: 14px; color: var(--t2); line-height: 1.75; }
+.about-body strong { color: var(--t); font-weight: 600; }
+
+/* ── CTA ── */
+.cta-sec { position: relative; z-index: 1; padding: 120px 48px; border-top: 1px solid var(--b); text-align: center; }
+.cta-glow { position: absolute; top: -100px; left: 50%; transform: translateX(-50%); width: 700px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(108,95,255,0.05) 0%, transparent 60%); pointer-events: none; }
+.cta-h2 { font-size: clamp(32px, 4vw, 54px); font-weight: 700; line-height: 1.08; letter-spacing: -1.5px; margin-bottom: 16px; }
+.cta-h2 em { font-style: normal; color: var(--live); }
+.cta-sub { font-size: 16px; color: var(--t2); margin-bottom: 40px; }
+.cta-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--t3); margin-top: 16px; }
+
+/* ── FOOTER ── */
+footer { position: relative; z-index: 1; border-top: 1px solid var(--b); padding: 26px 48px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.f-left { display: flex; align-items: center; gap: 12px; }
+.f-logo { width: 20px; height: 20px; border-radius: 5px; overflow: hidden; border: 1px solid var(--ab); }
+.f-logo img { width: 100%; height: 100%; display: block; }
+.f-name { font-size: 12px; font-weight: 600; color: var(--t); }
+.f-copy { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--t3); }
+.f-links { display: flex; gap: 20px; }
+.f-links a { font-size: 12px; color: var(--t3); text-decoration: none; transition: color 0.15s; }
+.f-links a:hover { color: var(--t2); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 960px) {
+  nav { padding: 14px 20px; }
+  .nl { display: none; }
+  .hero-wrap { flex-direction: column; padding: 100px 20px 60px; gap: 48px; align-items: flex-start; }
+  .notify-strip { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+  .ns-form { width: 100%; }
+  .ns-input { flex: 1; width: auto; }
+  .sec { padding: 64px 20px; }
+  .feat-grid { grid-template-columns: 1fr 1fr; }
+  .plat-grid { grid-template-columns: 1fr 1fr; }
+  .road-grid { grid-template-columns: 1fr; }
+  footer { padding: 20px; flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 600px) {
+  .feat-grid { grid-template-columns: 1fr; }
+  .plat-grid { grid-template-columns: 1fr; }
+  .popup-clip { width: 260px; }
+  .popup { width: 260px; }
+  .cta-sec { padding: 80px 20px; }
+}
+</style>
 </head>
 <body>
 
-<!-- ── Nav ──────────────────────────────────── -->
+<div class="amb">
+  <div class="amb-glow"></div>
+  <div class="amb-ring ar1"></div>
+  <div class="amb-ring ar2"></div>
+  <div class="amb-ring ar3"></div>
+</div>
+
+<!-- NAV -->
 <nav>
-  <a href="/" class="nav-logo">
-    <div class="nav-logo-icon">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <circle cx="9" cy="9" r="7" stroke="#1e1e1e" stroke-width="2"/>
-        <path d="M9 2 a7 7 0 0 1 6.06 3.5" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="9" cy="9" r="4" stroke="#1e1e1e" stroke-width="1.5"/>
-        <path d="M9 5 a4 4 0 0 1 3.46 2 a4 4 0 0 1 0 4" stroke="#67e8f9" stroke-width="1.5" stroke-linecap="round"/>
-        <text x="9" y="12.5" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="7" font-weight="800" fill="white">T</text>
-      </svg>
-    </div>
-    <span class="nav-logo-name">TokenPulse</span>
+  <a class="nb" href="#">
+    <div class="nb-logo"><img src="https://raw.githubusercontent.com/anu-ship-it/TokenPulse/main/icons/icon48.png" alt="TokenPulse"></div>
+    <span class="nb-name">TokenPulse</span>
+    <span class="nb-tag">alpha</span>
   </a>
-  <ul class="nav-links">
-    <li><a href="#features">Features</a></li>
-    <li><a href="#compare">Compare</a></li>
-    <li><a href="#tips">Tips</a></li>
-    <li><a href="#about">About</a></li>
-  </ul>
-  <a href="#install" class="nav-cta">Add to Chrome — Free</a>
+  <div class="nl">
+    <a href="#features">Features</a>
+    <a href="#platforms">Platforms</a>
+    <a href="#compare">Compare</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="#about">About</a>
+  </div>
+  <a class="n-cta" href="https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic" target="_blank">Add to Chrome — Free</a>
 </nav>
 
-<!-- ── Hero ─────────────────────────────────── -->
-<section class="hero" id="install">
-  <div class="hero-inner">
-    <div class="hero-content">
-      <div class="hero-badge">
-        <div class="hero-badge-dot"></div>
-        Free Chrome Extension
-      </div>
-      <h1>Never get cut off<br><span>mid-conversation</span><br>again.</h1>
-      <p class="hero-sub">
-        TokenPulse tracks your <strong>context window</strong> and <strong>rate limits</strong>
-        in real time — directly inside Claude and ChatGPT.
-        Live bar, smart alerts, daily history.
-      </p>
-      <div class="hero-actions">
-        <a href="https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic" class="btn-primary" id="install-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M12 16l-4-4h3V4h2v8h3l-4 4z"/>
-            <path d="M20 18H4" stroke-linecap="round"/>
-          </svg>
-          Add to Chrome — it's free
-        </a>
-        <span class="hero-note">No account needed. Works immediately.</span>
-
-        <div style="margin-top: 8px;">
-          <div class="notify-label">Get notified when Gemini support launches →</div>
-          <form class="notify-form" id="notify-form" action="https://formspree.io/f/xqeoqzdg" method="POST">
-            <input class="notify-input" type="email" name="email" placeholder="your@email.com" required>
-            <button class="notify-btn" type="submit">Notify me</button>
-          </form>
-          <div class="notify-success" id="notify-success">✓ You're on the list. We'll let you know.</div>
-        </div>
-      </div>
+<!-- HERO -->
+<div style="position:relative;z-index:1">
+<div class="hero-wrap">
+  <div class="hl">
+    <div class="h-eye">
+      <div class="h-eye-dot"></div>
+      <span class="h-eye-txt">Claude · ChatGPT · Gemini · DeepSeek</span>
     </div>
-
-    <!-- Popup mockup -->
-    <div class="hero-visual">
-      <div class="popup-mockup">
-        <div class="pm-header">
-          <div class="pm-logo-row">
-            <div class="pm-logo">
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <circle cx="6.5" cy="6.5" r="5" stroke="#1e1e1e" stroke-width="1.5"/>
-                <path d="M6.5 1.5 a5 5 0 0 1 4.33 2.5" stroke="#06b6d4" stroke-width="1.5" stroke-linecap="round"/>
-                <circle cx="6.5" cy="6.5" r="3" stroke="#1e1e1e" stroke-width="1.2"/>
-                <path d="M6.5 3.5 a3 3 0 0 1 2.6 1.5 a3 3 0 0 1 0 3" stroke="#67e8f9" stroke-width="1.2" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <span class="pm-name">TokenPulse</span>
-          </div>
-          <span class="pm-badge">Claude</span>
-        </div>
-
-        <div class="pm-section">
-          <div class="pm-section-title">Context Window</div>
-          <div class="pm-big-num">~41k</div>
-          <div class="pm-meta">~159k remaining · 20% used</div>
-          <div class="pm-bar-track">
-            <div class="pm-bar-fill" style="width:20%"></div>
-          </div>
-        </div>
-
-        <div class="pm-section">
-          <div class="pm-section-title">Rate Limits</div>
-          <div class="pm-row">
-            <div>
-              <div class="pm-row-name">5-Hour Session</div>
-              <div class="pm-row-sub">Resets in 3h 14m</div>
-            </div>
-            <div style="text-align:right">
-              <div class="pm-row-pct" style="color:#f59e0b">79%</div>
-              <div class="pm-row-mini"><div class="pm-row-mini-fill" style="width:79%;background:#f59e0b"></div></div>
-            </div>
-          </div>
-          <div class="pm-row">
-            <div>
-              <div class="pm-row-name">7-Day Weekly</div>
-              <div class="pm-row-sub">Resets in 63h 54m</div>
-            </div>
-            <div style="text-align:right">
-              <div class="pm-row-pct" style="color:#06b6d4">26%</div>
-              <div class="pm-row-mini"><div class="pm-row-mini-fill" style="width:26%;background:#06b6d4"></div></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="pm-footer">
-          <span class="pm-footer-note">chars ÷ 4 · ±8%</span>
-          <span class="pm-new-chat">+ New chat</span>
-        </div>
-      </div>
-
-      <!-- In-page bar mockup -->
-      <div class="bar-mockup">
-        <span class="bm-label">TOKENS</span>
-        <div class="bm-track"><div class="bm-fill"></div></div>
-        <span class="bm-count">199.3k left</span>
-      </div>
+    <h1 class="h1">Never get cut off<br>mid-conversation <em>again.</em></h1>
+    <p class="h-sub">
+      TokenPulse puts a live token bar above every input box.
+      Real rate limits, reset countdowns, daily history.
+      <strong>No API key. No account. Zero setup.</strong>
+    </p>
+    <div class="h-cta-row">
+      <a class="btn-main" href="https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic" target="_blank">
+        Add to Chrome — it's free
+      </a>
+      <div class="h-cta-note">Free · No account<br>Works immediately</div>
+    </div>
+    <div class="h-plats">
+      <div class="h-plat"><div class="h-plat-dot"></div>Claude</div>
+      <div class="h-plat"><div class="h-plat-dot"></div>ChatGPT</div>
+      <div class="h-plat"><div class="h-plat-dot"></div>Gemini</div>
+      <div class="h-plat"><div class="h-plat-dot"></div>DeepSeek</div>
     </div>
   </div>
-</section>
 
-<!-- ── Platforms ──────────────────────────── -->
-<div class="platforms">
-  <div class="platforms-inner">
-    <div class="platform-pill">
-      <div class="platform-pill-dot"></div>
-      Works on Claude
+  <!-- POPUP — peek at rest, full reveal on hover -->
+  <div class="hr">
+    <div class="popup-clip">
+      <div class="popup-mask"></div>
+      <div class="popup-hint">Hover to explore ↓</div>
+      <div class="popup">
+        <div class="p-hd">
+          <div class="p-hdl">
+            <div class="p-logo"><img src="https://raw.githubusercontent.com/anu-ship-it/TokenPulse/main/icons/icon48.png" alt=""></div>
+            <span class="p-appname">TokenPulse</span>
+          </div>
+          <div class="p-hdr">
+            <div class="p-dot"></div>
+            <div class="p-badge">Claude</div>
+            <div class="p-icons">
+              <span class="p-ic">💡</span>
+              <span class="p-ic">↻</span>
+              <span class="p-ic">⚙</span>
+            </div>
+          </div>
+        </div>
+        <div class="p-sec">
+          <div class="p-stitle">Context Window</div>
+          <div class="p-ctx-lbl">TOKENS USED</div>
+          <div class="p-ctx-hero">
+            <span class="p-ctx-val">~10k</span>
+            <span class="p-ctx-lim">200k limit</span>
+          </div>
+          <div class="p-ctx-meta">
+            <span class="rem">~190k remaining</span>
+            <span>5% used</span>
+          </div>
+          <div class="p-bar"><div class="p-bar-fill" style="width:5%;background:#06b6d4"></div></div>
+          <div class="p-bar-ft">
+            <span>0</span>
+            <span class="p-bar-status">HEALTHY</span>
+            <span>200k</span>
+          </div>
+        </div>
+        <div class="p-sec">
+          <div class="p-stitle">Estimated Cost · Sonnet 4</div>
+          <div class="p-card">
+            <div class="p-row">
+              <div><div class="p-rn">This conversation</div><div class="p-rs">Input tokens only</div></div>
+              <div class="p-rv">$0.031</div>
+            </div>
+            <div class="p-row">
+              <div><div class="p-rn">Today</div><div class="p-rs">Peak usage · all chats</div></div>
+              <div class="p-rv">$0.046</div>
+            </div>
+            <div class="p-row">
+              <div><div class="p-rn">This week</div><div class="p-rs">Last 7 days</div></div>
+              <div class="p-rv">$0.114</div>
+            </div>
+          </div>
+        </div>
+        <div class="p-sec">
+          <div class="p-stitle">Rate Limits</div>
+          <div class="p-card">
+            <div class="p-row">
+              <div><div class="p-rn">5-Hour Session</div><div class="p-rs">—</div></div>
+              <div class="p-rl-r">
+                <span class="p-rl-pct" style="color:#06b6d4">0%</span>
+                <div class="p-mini"><div class="p-mini-f" style="width:0%;background:#06b6d4"></div></div>
+              </div>
+            </div>
+            <div class="p-row">
+              <div><div class="p-rn">7-Day Weekly</div><div class="p-rs">Resets in 88h 46m</div></div>
+              <div class="p-rl-r">
+                <span class="p-rl-pct" style="color:#06b6d4">10%</span>
+                <div class="p-mini"><div class="p-mini-f" style="width:10%;background:#06b6d4"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-ft">
+          <div class="p-ft-meta">
+            <button class="p-ft-ml">⭐ review</button>
+            <span class="p-ft-dot">·</span>
+            <button class="p-ft-ml">help</button>
+          </div>
+          <button class="p-nc">+ New chat</button>
+        </div>
+      </div>
     </div>
-    <div class="platforms-divider">+</div>
-    <div class="platform-pill">
-      <div class="platform-pill-dot"></div>
-      Works on ChatGPT
+    <div class="p-float">
+      <div class="pf-dot"></div>
+      <span class="pf-txt">No API key required</span>
     </div>
-    <div class="platforms-divider">·</div>
-    <span style="font-size:12px;color:var(--text-muted)">Gemini coming soon</span>
+  </div>
+</div>
+</div>
+
+<!-- NOTIFY STRIP -->
+<div class="notify-strip">
+  <div class="ns-left">
+    <div class="ns-eye">Coming soon</div>
+    <div class="ns-h">More platforms. More models. More depth.</div>
+    <div class="ns-sub">Firefox support, per-model breakdowns, CSV export, and more AI platforms as they grow. Get notified when they ship.</div>
+  </div>
+  <div>
+    <form class="ns-form" id="notify-form">
+      <input class="ns-input" type="email" id="notify-email" placeholder="your@email.com" required>
+      <button class="ns-btn" type="submit">Notify me</button>
+    </form>
+    <div class="ns-success" id="notify-success">You're on the list — we'll let you know when it ships</div>
   </div>
 </div>
 
-<!-- ── Features ───────────────────────────── -->
-<section id="features" style="border-top:1px solid var(--border2)">
-  <div class="section-inner">
-    <div class="section-label">Features</div>
-    <h2>Everything you need to<br><span>stay ahead of the limit.</span></h2>
-    <p class="section-sub">Built for power users who write long documents, run deep research sessions, or just have long conversations.</p>
+<!-- FEATURES -->
+<section class="sec" id="features">
+  <div class="wrap">
+    <div class="eyebrow">Features</div>
+    <h2 class="sh2">Everything you need to<br><em>stay ahead of the limit.</em></h2>
+    <p class="ssub">Built for anyone who writes long documents, runs deep research sessions, or just has long conversations across AI platforms.</p>
+    <div class="feat-grid">
+      <div class="fc"><div class="fc-icon">📊</div><div class="fc-title">Live Token Bar</div><div class="fc-body">A slim bar above every input box shows how much context you have left — updates with every message.</div><span class="fc-tag">All 4 platforms</span></div>
+      <div class="fc"><div class="fc-icon">⚡</div><div class="fc-title">Real Rate Limit Data</div><div class="fc-body">Pulls your actual 5-hour session and 7-day weekly usage from Claude's internal API. Exact numbers, exact reset times.</div><span class="fc-tag claude">Claude only</span></div>
+      <div class="fc"><div class="fc-icon">🔔</div><div class="fc-title">Smart Notifications</div><div class="fc-body">Alerts at 75%, 90%, and 100% — threshold-based not timer-based. Fires once per crossing, resets when usage drops.</div><span class="fc-tag">All 4 platforms</span></div>
+      <div class="fc"><div class="fc-icon">📅</div><div class="fc-title">Daily Usage History</div><div class="fc-body">Records peak token usage per day, per platform. No setup — works silently in the background as you chat.</div><span class="fc-tag">All 4 platforms</span></div>
+      <div class="fc"><div class="fc-icon">💰</div><div class="fc-title">Estimated Cost</div><div class="fc-body">See estimated spend for this conversation, today, and this week. Model-aware pricing across all supported platforms.</div><span class="fc-tag">All 4 platforms</span></div>
+      <div class="fc"><div class="fc-icon">🔒</div><div class="fc-title">100% Private</div><div class="fc-body">All data stays on your device. No accounts, no tracking, no analytics. Uses your existing browser session — nothing else.</div><span class="fc-tag">All 4 platforms</span></div>
+    </div>
+  </div>
+</section>
 
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <div class="feature-title">Live Token Bar</div>
-        <div class="feature-desc">A slim bar sits above the input box showing exactly how much context window you have left — updates with every message.</div>
-        <span class="feature-tag both">Claude + ChatGPT</span>
+<!-- PLATFORMS -->
+<section class="sec" id="platforms">
+  <div class="wrap">
+    <div class="eyebrow">Platform support</div>
+    <h2 class="sh2">Four platforms.<br><em>One extension.</em></h2>
+    <p class="ssub">Core tracking works everywhere. Claude's internal API unlocks rate limits and countdowns that no other platform exposes.</p>
+    <div class="plat-grid">
+      <div class="plat-card">
+        <div class="plat-hd"><div class="plat-dot"></div><div class="plat-name">Claude</div></div>
+        <div class="plat-feats">
+          <div class="pf-row"><span class="pf-y">✓</span>Live token bar</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Context window %</div>
+          <div class="pf-row"><span class="pf-y">✓</span>5-hr + 7-day limits</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Reset countdowns</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Smart notifications</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Estimated cost</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Daily history</div>
+        </div>
+        <div class="plat-bar"><div class="plat-bar-f" style="width:100%"></div></div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <div class="feature-title">Real Rate Limit Data</div>
-        <div class="feature-desc">Pulls your actual 5-hour session and 7-day weekly usage directly from Claude's API. Exact percentages, exact reset countdowns.</div>
-        <span class="feature-tag">Claude only</span>
+      <div class="plat-card">
+        <div class="plat-hd"><div class="plat-dot"></div><div class="plat-name">ChatGPT</div></div>
+        <div class="plat-feats">
+          <div class="pf-row"><span class="pf-y">✓</span>Live token bar</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Context window %</div>
+          <div class="pf-row"><span class="pf-n">—</span><span class="pf-nd">Rate limits</span></div>
+          <div class="pf-row"><span class="pf-n">—</span><span class="pf-nd">Reset countdowns</span></div>
+          <div class="pf-row"><span class="pf-y">✓</span>Smart notifications</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Estimated cost</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Daily history</div>
+        </div>
+        <div class="plat-bar"><div class="plat-bar-f" style="width:72%"></div></div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔔</div>
-        <div class="feature-title">Smart Notifications</div>
-        <div class="feature-desc">Get alerted at 75%, 90%, and 100% — before the wall hits. Threshold-based, not timer-based. Zero noise.</div>
-        <span class="feature-tag both">Claude + ChatGPT</span>
+      <div class="plat-card">
+        <div class="plat-hd"><div class="plat-dot"></div><div class="plat-name">Gemini</div></div>
+        <div class="plat-feats">
+          <div class="pf-row"><span class="pf-y">✓</span>Live token bar</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Context window %</div>
+          <div class="pf-row"><span class="pf-n">—</span><span class="pf-nd">Rate limits</span></div>
+          <div class="pf-row"><span class="pf-n">—</span><span class="pf-nd">Reset countdowns</span></div>
+          <div class="pf-row"><span class="pf-y">✓</span>Smart notifications</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Estimated cost</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Daily history</div>
+        </div>
+        <div class="plat-bar"><div class="plat-bar-f" style="width:72%"></div></div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">📅</div>
-        <div class="feature-title">Daily Usage History</div>
-        <div class="feature-desc">Automatically records your peak token usage per day. No setup — it just works silently in the background as you chat.</div>
-        <span class="feature-tag both">Claude + ChatGPT</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚙️</div>
-        <div class="feature-title">Settings Inside Popup</div>
-        <div class="feature-desc">Configure notification thresholds and refresh intervals without leaving the popup. No new tabs, no settings pages.</div>
-        <span class="feature-tag both">Claude + ChatGPT</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <div class="feature-title">100% Private</div>
-        <div class="feature-desc">All data stays on your device. No accounts, no tracking, no analytics. Claude rate data uses your existing session only.</div>
-        <span class="feature-tag both">Claude + ChatGPT</span>
+      <div class="plat-card">
+        <div class="plat-hd"><div class="plat-dot"></div><div class="plat-name">DeepSeek</div></div>
+        <div class="plat-feats">
+          <div class="pf-row"><span class="pf-y">✓</span>Live token bar</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Context window %</div>
+          <div class="pf-row"><span class="pf-n">—</span><span class="pf-nd">Rate limits</span></div>
+          <div class="pf-row"><span class="pf-n">—</span><span class="pf-nd">Reset countdowns</span></div>
+          <div class="pf-row"><span class="pf-y">✓</span>Smart notifications</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Estimated cost</div>
+          <div class="pf-row"><span class="pf-y">✓</span>Daily history</div>
+        </div>
+        <div class="plat-bar"><div class="plat-bar-f" style="width:72%"></div></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── Compare ────────────────────────────── -->
-<section id="compare" class="compare-section">
-  <div class="section-inner">
-    <div class="section-label">Compare</div>
-    <h2>Why TokenPulse<br><span>covers more ground.</span></h2>
-    <p class="section-sub">Most token trackers only work on one platform. TokenPulse works on both — with more features, for free.</p>
-
-    <div class="compare-grid">
-      <div class="compare-header">Feature</div>
-      <div class="compare-header ours">TokenPulse</div>
-      <div class="compare-header">Others</div>
-
-      <div class="compare-cell feature-name">Works on Claude</div>
-      <div class="compare-cell ours-col"><span class="check">✓</span></div>
-      <div class="compare-cell"><span class="check">✓</span></div>
-
-      <div class="compare-cell feature-name">Works on ChatGPT</div>
-      <div class="compare-cell ours-col"><span class="check">✓</span></div>
-      <div class="compare-cell"><span class="cross">—</span></div>
-
-      <div class="compare-cell feature-name">Live in-page token bar</div>
-      <div class="compare-cell ours-col"><span class="check">✓</span></div>
-      <div class="compare-cell"><span class="cross">—</span></div>
-
-      <div class="compare-cell feature-name">Real Claude rate limits (API)</div>
-      <div class="compare-cell ours-col"><span class="check">✓</span></div>
-      <div class="compare-cell"><span class="check">✓</span></div>
-
-      <div class="compare-cell feature-name">Reset countdowns</div>
-      <div class="compare-cell ours-col"><span class="check">✓</span></div>
-      <div class="compare-cell"><span class="check">✓</span></div>
-
-      <div class="compare-cell feature-name">Daily usage history</div>
-      <div class="compare-cell ours-col"><span class="check">✓</span></div>
-      <div class="compare-cell"><span class="cross">—</span></div>
-
-      <div class="compare-cell feature-name">Smart notifications</div>
-      <div class="compare-cell ours-col"><span class="check">✓</span></div>
-      <div class="compare-cell"><span class="cross">roadmap</span></div>
-
-      <div class="compare-cell feature-name">Works on Windows / Linux</div>
-      <div class="compare-cell ours-col"><span class="check">✓</span></div>
-      <div class="compare-cell"><span class="cross">Mac only</span></div>
-
-      <div class="compare-cell feature-name">Free</div>
-      <div class="compare-cell ours-col"><span class="check">✓</span></div>
-      <div class="compare-cell"><span class="cross">paid</span></div>
+<!-- COMPARE -->
+<section class="sec" id="compare">
+  <div class="wrap">
+    <div class="eyebrow">Compare</div>
+    <h2 class="sh2">Why TokenPulse<br><em>covers more ground.</em></h2>
+    <p class="ssub">Most token trackers only work on one platform and require an API key. TokenPulse works on four — no key required.</p>
+    <div class="cmp-tbl">
+      <div class="cmp-head"><span>Feature</span><span>TokenPulse</span><span>Others</span></div>
+      <div class="cmp-r"><div class="cmp-feat">Works on Claude</div><div class="cmp-cell ck">✓</div><div class="cmp-cell ck">✓</div></div>
+      <div class="cmp-r"><div class="cmp-feat">Works on ChatGPT</div><div class="cmp-cell ck">✓</div><div class="cmp-cell cx">—</div></div>
+      <div class="cmp-r"><div class="cmp-feat">Works on Gemini</div><div class="cmp-cell ck">✓</div><div class="cmp-cell cx">—</div></div>
+      <div class="cmp-r"><div class="cmp-feat">Works on DeepSeek</div><div class="cmp-cell ck">✓</div><div class="cmp-cell cx">—</div></div>
+      <div class="cmp-r"><div class="cmp-feat">No API key required</div><div class="cmp-cell ck">✓</div><div class="cmp-cell cx">—</div></div>
+      <div class="cmp-r"><div class="cmp-feat">Live in-page token bar</div><div class="cmp-cell ck">✓</div><div class="cmp-cell cx">—</div></div>
+      <div class="cmp-r"><div class="cmp-feat">Real Claude rate limits</div><div class="cmp-cell"><span class="ca">real API</span></div><div class="cmp-cell ck">✓</div></div>
+      <div class="cmp-r"><div class="cmp-feat">Daily usage history</div><div class="cmp-cell ck">✓</div><div class="cmp-cell cx">—</div></div>
+      <div class="cmp-r"><div class="cmp-feat">Estimated cost tracking</div><div class="cmp-cell ck">✓</div><div class="cmp-cell cx">—</div></div>
+      <div class="cmp-r"><div class="cmp-feat">Free</div><div class="cmp-cell ck">✓</div><div class="cmp-cell cx">paid</div></div>
     </div>
   </div>
 </section>
 
-<!-- ── Tips ───────────────────────────────── -->
-<section id="tips" style="border-top:1px solid var(--border2)">
-  <div class="section-inner">
-    <div class="section-label">Token Tips</div>
-    <h2>Use less. <span>Get more</span><br>from every session.</h2>
-    <p class="section-sub">Practical tips to stretch your context window and avoid hitting limits mid-conversation.</p>
-
-    <div class="tips-tabs">
-      <button class="tips-tab active" onclick="switchTab('claude')">Claude</button>
-      <button class="tips-tab" onclick="switchTab('chatgpt')">ChatGPT</button>
-    </div>
-
-    <div class="tips-panel active" id="tips-claude">
-      <div class="tip-card">
-        <div class="tip-num">01</div>
-        <div class="tip-title">Start a new chat when the topic changes</div>
-        <div class="tip-body">Every message in a conversation adds to the context. When you shift topics, start fresh — don't drag old context into a new task.</div>
+<!-- ROADMAP -->
+<section class="sec" id="roadmap">
+  <div class="wrap">
+    <div class="eyebrow">Roadmap</div>
+    <h2 class="sh2">Where this is going.<br><em>More platforms. More depth.</em></h2>
+    <p class="ssub">Actively developed. Here's what's shipped, what's coming next, and what's on the horizon.</p>
+    <div class="road-grid">
+      <div class="road-card">
+        <div class="road-ver current">v2.0 — Current</div>
+        <div class="road-title">Four-platform baseline</div>
+        <div class="road-items">
+          <div class="road-item"><div class="road-dot"></div>Claude + ChatGPT + Gemini + DeepSeek</div>
+          <div class="road-item"><div class="road-dot"></div>Real Claude API rate limits</div>
+          <div class="road-item"><div class="road-dot"></div>Live in-page token bar</div>
+          <div class="road-item"><div class="road-dot"></div>Smart threshold notifications</div>
+          <div class="road-item"><div class="road-dot"></div>Daily usage history</div>
+          <div class="road-item"><div class="road-dot"></div>Estimated cost tracking</div>
+        </div>
       </div>
-      <div class="tip-card">
-        <div class="tip-num">02</div>
-        <div class="tip-title">Use Projects for recurring work</div>
-        <div class="tip-body">Put stable instructions and files in a Claude Project instead of pasting them every session. Claude remembers so you don't have to repeat.</div>
+      <div class="road-card">
+        <div class="road-ver">v2.1 — Next</div>
+        <div class="road-title">Smarter alerts, broader reach</div>
+        <div class="road-items">
+          <div class="road-item"><div class="road-sq"></div>Firefox support</div>
+          <div class="road-item"><div class="road-sq"></div>Response-ready notification</div>
+          <div class="road-item"><div class="road-sq"></div>Weekly usage summary</div>
+          <div class="road-item"><div class="road-sq"></div>Per-model breakdowns</div>
+        </div>
       </div>
-      <div class="tip-card">
-        <div class="tip-num">03</div>
-        <div class="tip-title">Ask for compact answers first</div>
-        <div class="tip-body">Tell Claude to give the shortest useful answer first, then expand only if needed. Saves tokens on both sides of the conversation.</div>
-        <div class="tip-prompt">Give me the shortest useful answer first. Ask if I want more detail.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-num">04</div>
-        <div class="tip-title">Summarize before a long session</div>
-        <div class="tip-body">If a conversation is getting long, ask Claude to summarize the key decisions so far. Then start a new chat with just that summary.</div>
-        <div class="tip-prompt">Summarize the key decisions and conclusions from this conversation in under 200 words.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-num">05</div>
-        <div class="tip-title">Use faster models for simple tasks</div>
-        <div class="tip-body">Don't use Claude Opus for formatting a list or rewriting a short paragraph. Save your premium model quota for analysis and deep work.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-num">06</div>
-        <div class="tip-title">Watch your 5-hour session limit</div>
-        <div class="tip-body">Claude's 5-hour rolling window resets independently of the 7-day limit. TokenPulse shows both — check your session usage before a heavy session.</div>
-      </div>
-    </div>
-
-    <div class="tips-panel" id="tips-chatgpt">
-      <div class="tip-card">
-        <div class="tip-num">01</div>
-        <div class="tip-title">Use Custom Instructions for stable context</div>
-        <div class="tip-body">Put your tone, format preferences, and recurring context in Custom Instructions. Stop re-briefing ChatGPT on every new chat.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-num">02</div>
-        <div class="tip-title">One job per chat</div>
-        <div class="tip-body">ChatGPT works best when each conversation has a single clear purpose. Mixing research, drafting, and editing in one chat burns context fast.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-num">03</div>
-        <div class="tip-title">Skip Thinking mode for simple tasks</div>
-        <div class="tip-body">Thinking models use more tokens and quota. Use them for hard architecture decisions or complex debugging — not for rewriting emails.</div>
-        <div class="tip-prompt">Give me a direct answer. No need for deep reasoning on this one.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-num">04</div>
-        <div class="tip-title">Use Projects for recurring clients or topics</div>
-        <div class="tip-body">ChatGPT Projects keep context scoped. One project per client, one per research area. Keeps conversations focused and context lean.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-num">05</div>
-        <div class="tip-title">Split research from writing</div>
-        <div class="tip-body">Do your research in one chat, then start a fresh chat for the final output. Don't carry the full research thread into the writing session.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-num">06</div>
-        <div class="tip-title">Watch TokenPulse's bar during coding sessions</div>
-        <div class="tip-body">Code and logs consume tokens fast. When the bar hits 70%, start wrapping up or summarize the session state before continuing in a new chat.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── About ───────────────────────────────── -->
-<section id="about" class="about-section">
-  <div class="section-inner">
-    <div class="section-label">About</div>
-    <div class="about-card">
-      <div class="about-avatar">A</div>
-      <div>
-        <div class="about-name">Anoop Kumar and Mansi Rathore</div>
-        <div class="about-role">Builder · Alpha</div>
-        <div class="about-bio">
-          TokenPulse started because I kept getting cut off mid-conversation and had no idea how close I was to the limit.
-          I built the tracker I wished existed — for both Claude and ChatGPT, with real data, not guesses.
-          Alpha is my independent product studio. TokenPulse is the first release.
+      <div class="road-card">
+        <div class="road-ver">Future</div>
+        <div class="road-title">More platforms, more models</div>
+        <div class="road-items">
+          <div class="road-item road-dim"><div class="road-sq"></div>Usage export (CSV)</div>
+          <div class="road-item road-dim"><div class="road-sq"></div>Keyboard shortcut to open popup</div>
+          <div class="road-item road-dim"><div class="road-sq"></div>More AI platforms as they grow</div>
+          <div class="road-item road-dim"><div class="road-sq"></div>Cloud sync across devices</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ── CTA Banner ─────────────────────────── -->
-<div class="cta-banner">
-  <div class="section-label" style="margin-bottom:16px">Get started</div>
-  <h2>Stop hitting walls.<br><span>Start tracking.</span></h2>
-  <p>Free. No account. Works in 30 seconds.</p>
-  <a href="#install" class="btn-primary" style="margin:0 auto">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <path d="M12 16l-4-4h3V4h2v8h3l-4 4z"/>
-      <path d="M20 18H4" stroke-linecap="round"/>
-    </svg>
+<!-- ABOUT -->
+<section class="sec" id="about">
+  <div class="wrap">
+    <div class="eyebrow">About</div>
+    <div class="about-card">
+      <div class="about-av">A</div>
+      <div class="about-name">Anoop Kumar & Mansi Rathore</div>
+      <div class="about-role">Builder · Alpha · Independent</div>
+      <p class="about-body">
+        TokenPulse started because <strong>I kept getting cut off mid-conversation</strong> with no idea how close I was to the limit. I built the tracker I wished existed — for Claude, ChatGPT, Gemini and DeepSeek, with real data, not guesses.<br><br>
+        No API key, no account, nothing to configure. Open source. Alpha is my independent product studio. TokenPulse is the first release.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-sec">
+  <div class="cta-glow"></div>
+  <h2 class="cta-h2">Stop hitting walls.<br><em>Start tracking.</em></h2>
+  <p class="cta-sub">Free. No account. Works in 30 seconds.</p>
+  <a class="btn-main" style="margin:0 auto;display:inline-flex" href="https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic" target="_blank">
     Add to Chrome — it's free
   </a>
-</div>
+  <div class="cta-meta" style="margin-top:16px">Chrome · Edge · Brave · Opera · No account · All data stays on your device</div>
+</section>
 
-<!-- ── Footer ─────────────────────────────── -->
+<!-- FOOTER -->
 <footer>
-  <div class="footer-left">
-    © 2026 <span>TokenPulse</span> · Built by Anoop Kumar and Mansi Rathore · Alpha
+  <div class="f-left">
+    <div class="f-logo"><img src="https://raw.githubusercontent.com/anu-ship-it/TokenPulse/main/icons/icon48.png" alt="TokenPulse"></div>
+    <span class="f-name">TokenPulse</span>
+    <span class="f-copy">© 2026 · Built by Anoop Kumar & Mansi Rathore · Alpha</span>
   </div>
-  <div class="footer-links">
-    <a href="privacy.html">Privacy Policy</a>
-    <a href="https://github.com" target="_blank">GitHub</a>
+  <div class="f-links">
+    <a href="privacy.html">Privacy</a>
+    <a href="support.html">Support</a>
+    <a href="https://github.com/anu-ship-it/TokenPulse" target="_blank">GitHub</a>
     <a href="mailto:anup17508@gmail.com">Contact</a>
   </div>
 </footer>
 
 <script>
-  // Tab switching
-  function switchTab(platform) {
-    document.querySelectorAll('.tips-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tips-panel').forEach(p => p.classList.remove('active'));
-    event.target.classList.add('active');
-    document.getElementById('tips-' + platform).classList.add('active');
+document.getElementById('notify-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('notify-email').value;
+  const btn = this.querySelector('button');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://formspree.io/f/xqeoqzdg', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ email, source: 'notify_strip' })
+    });
+    if (res.ok) {
+      document.getElementById('notify-form').style.display = 'none';
+      const s = document.getElementById('notify-success');
+      s.style.display = 'flex';
+    } else {
+      btn.textContent = 'Notify me';
+      btn.disabled = false;
+    }
+  } catch(_) {
+    btn.textContent = 'Notify me';
+    btn.disabled = false;
   }
-
-  // Formspree email signup
-  document.getElementById('notify-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = new FormData(form);
-    try {
-      const res = await fetch(form.action, {
-        method: 'POST',
-        body: data,
-        headers: { 'Accept': 'application/json' }
-      });
-      if (res.ok) {
-        form.style.display = 'none';
-        document.getElementById('notify-success').style.display = 'block';
-      }
-    } catch (_) {}
-  });
-
-  // Update install button when store URL is ready
-  // Replace the href on both install buttons with the real Chrome Web Store URL
+});
 </script>
-
 </body>
 </html>
