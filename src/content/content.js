@@ -20,6 +20,9 @@
   let lastModel = "default";
   let popupShown = false;
   let rafPending = false;
+  let isStreaming     = false;
+  let streamTimer     = null;
+  let lastMutationTime = 0;
 
   // ── Session ID ─────────────────────────────────────────────────
   function getSessionId() {
@@ -403,6 +406,8 @@
   function init() {
     injectBar();
     startObserver();
+    startResponseReadyDetector();
+    onResponseReady();
     watchSession();
     setTimeout(scan, 800);
     setTimeout(scan, 2500);

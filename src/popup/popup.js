@@ -396,6 +396,7 @@ function renderSettings(state) {
           ${toggleRow("n75", "Alert at 75%", "Last call warning", s.notify_75)}
           ${toggleRow("n90", "Alert at 90%", "Critical warning", s.notify_90)}
           ${toggleRow("n100", "Alert at 100%", "Limit reached", s.notify_100)}
+          ${toggleRow("n_response", "Response ready", "Notify when generation finishes", s.notify_response_ready)}
         </div>
       </div>
 
