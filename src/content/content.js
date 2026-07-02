@@ -405,12 +405,12 @@
   // ── Boot ───────────────────────────────────────────────────────
   function init() {
     injectBar();
-    startResponseReadyDetector();
     startObserver();
     onResponseReady();
     watchSession();
     setTimeout(scan, 800);
     setTimeout(scan, 2500);
+    startResponseReadyDetector();
 
     if (IS_CLAUDE) {
       fetchClaudeUsage().then(usage => {
