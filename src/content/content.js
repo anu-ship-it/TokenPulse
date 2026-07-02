@@ -290,6 +290,28 @@
     obs.observe(document.body, { childList: true, subtree: true });
   }
 
+  function startResponseReadyDetector() {
+  let hadActivity = false;
+  let streamTimer = null;
+
+  const obs = new MutationObserver(() => {
+    // Mark that we've seen activity
+    hadActivity = true;
+
+    // Reset the 2-second silence timer
+    clearTimeout(streamTimer);
+    streamTimer = setTimeout(() => {
+      // 2 seconds of silence after activity = response done
+      if (hadActivity) {
+        hadActivity = false;
+        onResponseReady();
+      }
+    }, 2000);
+  });
+
+  obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+
   // ── Bar injection ──────────────────────────────────────────────
   function resolveWrapper() {
     if (IS_CLAUDE) return document.querySelector("fieldset, div[contenteditable='true']");
@@ -404,20 +426,19 @@
 
   // ── Boot ───────────────────────────────────────────────────────
   function init() {
-    injectBar();
-    startObserver();
-    onResponseReady();
-    watchSession();
-    setTimeout(scan, 800);
-    setTimeout(scan, 2500);
-    startResponseReadyDetector();
+  injectBar();
+  startObserver();
+  startResponseReadyDetector();
+  watchSession();
+  setTimeout(scan, 800);
+  setTimeout(scan, 2500);
 
-    if (IS_CLAUDE) {
-      fetchClaudeUsage().then(usage => {
-        if (usage) { try { chrome.runtime.sendMessage({ type: "CLAUDE_USAGE_RESULT", usage }); } catch (_) { } }
-      });
-    }
+  if (IS_CLAUDE) {
+    fetchClaudeUsage().then(usage => {
+      if (usage) { try { chrome.runtime.sendMessage({ type: "CLAUDE_USAGE_RESULT", usage }); } catch (_) { } }
+    });
   }
+}
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
