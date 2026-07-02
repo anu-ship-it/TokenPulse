@@ -46,10 +46,13 @@ body {
   width: 900px; height: 900px; border-radius: 50%;
   background: radial-gradient(circle, rgba(108,95,255,0.05) 0%, transparent 60%);
 }
-.amb-ring { position: absolute; border-radius: 50%; top: -200px; left: 50%; transform: translateX(-50%); border: 1px solid rgba(108,95,255,0.06); }
+.amb-ring {
+  position: absolute; border-radius: 50%; top: -200px; left: 50%;
+  transform: translateX(-50%); border: 1px solid rgba(108,95,255,0.06);
+}
 .ar1 { width: 500px;  height: 500px; }
-.ar2 { width: 800px;  height: 800px; border-color: rgba(108,95,255,0.035); }
-.ar3 { width: 1100px; height: 1100px; border-color: rgba(108,95,255,0.02); }
+.ar2 { width: 800px;  height: 800px; border-color: rgba(108,95,255,0.03); }
+.ar3 { width: 1100px; height: 1100px; border-color: rgba(108,95,255,0.018); }
 
 /* ── NAV ── */
 nav {
@@ -60,14 +63,28 @@ nav {
   border-bottom: 1px solid var(--b);
 }
 .nb { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.nb-logo { width: 28px; height: 28px; border-radius: 7px; background: var(--s2); border: 1px solid var(--ab); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.nb-logo {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--s2); border: 1px solid var(--ab);
+  overflow: hidden; display: flex; align-items: center; justify-content: center;
+}
 .nb-logo img { width: 22px; height: 22px; display: block; }
 .nb-name { font-size: 14px; font-weight: 700; color: var(--t); letter-spacing: -0.3px; }
-.nb-tag { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 600; color: var(--acc); background: var(--ad); border: 1px solid var(--ab); padding: 2px 6px; border-radius: 4px; }
+.nb-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600; color: var(--acc);
+  background: var(--ad); border: 1px solid var(--ab);
+  padding: 2px 6px; border-radius: 4px;
+}
 .nl { display: flex; gap: 28px; }
 .nl a { font-size: 13px; color: var(--t2); text-decoration: none; transition: color 0.15s; }
 .nl a:hover { color: var(--t); }
-.n-cta { background: var(--acc); color: #fff; padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.15s ease; }
+.n-cta {
+  background: var(--acc); color: #fff;
+  padding: 9px 20px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; text-decoration: none;
+  transition: all 0.15s ease;
+}
 .n-cta:hover { background: #7D71FF; transform: translateY(-1px); }
 
 /* ── HERO ── */
@@ -75,72 +92,117 @@ nav {
   position: relative; z-index: 1;
   max-width: 1200px; margin: 0 auto;
   display: flex; align-items: center;
-  padding: 130px 48px 90px;
-  gap: 80px; min-height: 100vh;
+  gap: 72px; padding: 140px 48px 100px;
 }
 .hl { flex: 1; max-width: 560px; }
+
 .h-eye { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; }
-.h-eye-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--live); box-shadow: 0 0 6px rgba(0,229,160,0.5); animation: blink 2s ease-in-out infinite; }
+.h-eye-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--live); box-shadow: 0 0 6px rgba(0,229,160,0.5);
+  animation: blink 2s ease-in-out infinite;
+}
 @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-.h-eye-txt { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; color: var(--live); letter-spacing: 0.8px; text-transform: uppercase; }
-.h1 { font-size: clamp(40px, 5vw, 64px); font-weight: 700; line-height: 1.05; letter-spacing: -2px; color: var(--t); margin-bottom: 22px; }
+.h-eye-txt {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 500; color: var(--live);
+  letter-spacing: 0.8px; text-transform: uppercase;
+}
+
+.h1 {
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 700; line-height: 1.05;
+  letter-spacing: -2px; margin-bottom: 22px;
+}
 .h1 em { font-style: normal; color: var(--live); }
-.h-sub { font-size: 17px; color: var(--t2); line-height: 1.7; margin-bottom: 36px; max-width: 460px; }
+
+.h-sub {
+  font-size: 17px; color: var(--t2); line-height: 1.7;
+  margin-bottom: 36px; max-width: 460px;
+}
 .h-sub strong { color: var(--t); font-weight: 600; }
+
 .h-cta-row { display: flex; align-items: center; gap: 16px; margin-bottom: 40px; }
-.btn-main { display: inline-flex; align-items: center; gap: 8px; background: var(--acc); color: #fff; padding: 13px 24px; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; transition: all 0.15s ease; letter-spacing: -0.2px; border: none; cursor: pointer; font-family: inherit; }
+.btn-main {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--acc); color: #fff;
+  padding: 13px 24px; border-radius: 10px;
+  font-size: 14px; font-weight: 700; text-decoration: none;
+  transition: all 0.15s ease; letter-spacing: -0.2px;
+  border: none; cursor: pointer;
+}
 .btn-main:hover { background: #7D71FF; transform: translateY(-1px); }
-.h-cta-note { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--t3); line-height: 1.7; }
+.h-cta-note {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--t3); line-height: 1.7;
+}
+
 .h-plats { display: flex; flex-wrap: wrap; gap: 8px; }
-.h-plat { display: flex; align-items: center; gap: 6px; background: var(--s1); border: 1px solid var(--bm); border-radius: 20px; padding: 6px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--t2); }
+.h-plat {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--s1); border: 1px solid var(--bm);
+  border-radius: 20px; padding: 6px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600; color: var(--t2);
+}
 .h-plat-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--live); box-shadow: 0 0 4px rgba(0,229,160,0.5); }
 
-/* ── POPUP MOCKUP — PEEK + HOVER REVEAL ── */
-.hr { flex-shrink: 0; position: relative; }
-
-/* Container clips the bottom so only top portion shows at rest */
-.popup-clip {
-  width: 300px;
-  height: 280px; /* shows roughly top 60% at rest */
-  overflow: hidden;
+/* ── POPUP HOVER-CARD MOCKUP ── */
+.hr {
+  flex-shrink: 0;
   position: relative;
-  border-radius: 14px;
-  transition: height 0.5s cubic-bezier(0.22,1,0.36,1);
-  cursor: pointer;
+  /* Clip so popup appears cut off at bottom — creates curiosity */
+  height: 420px;
+  overflow: hidden;
 }
-.hr:hover .popup-clip { height: 560px; } /* full height on hover */
-
-/* Fade mask at bottom when peeking */
-.popup-mask {
-  position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+.hr::after {
+  /* fade-out gradient at bottom, teasing more content below */
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 140px;
   background: linear-gradient(to bottom, transparent, #090909);
   pointer-events: none; z-index: 2;
-  transition: opacity 0.4s ease;
 }
-.hr:hover .popup-mask { opacity: 0; }
-
-/* Hover hint label */
-.popup-hint {
-  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+.hr-hint {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  z-index: 3;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px; font-weight: 600; color: var(--acc);
-  background: var(--ad); border: 1px solid var(--ab);
-  padding: 4px 12px; border-radius: 20px; white-space: nowrap;
-  z-index: 3; pointer-events: none;
-  transition: opacity 0.3s ease;
+  font-size: 10px; font-weight: 600; color: var(--t3);
+  display: flex; align-items: center; gap: 6px;
+  white-space: nowrap;
 }
-.hr:hover .popup-hint { opacity: 0; }
+.hr-hint::before {
+  content: '';
+  display: block; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--acc); box-shadow: 0 0 4px rgba(108,95,255,0.5);
+}
 
-/* Actual popup card */
 .popup {
   width: 300px;
   background: #080808;
-  border: 1px solid #1a1a1a;
+  border: 1px solid #1e1e1e;
   border-radius: 14px; overflow: hidden;
-  box-shadow: 0 40px 100px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.03);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03),
+    0 20px 60px rgba(0,0,0,0.7),
+    0 0 40px rgba(108,95,255,0.06);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* subtle hover lift */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.p-hd { display: flex; align-items: center; justify-content: space-between; padding: 11px 13px 10px; border-bottom: 1px solid #131313; }
+.popup:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 1px rgba(108,95,255,0.15),
+    0 32px 80px rgba(0,0,0,0.8),
+    0 0 60px rgba(108,95,255,0.1);
+}
+
+/* popup internals */
+.p-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 13px 10px; border-bottom: 1px solid #131313;
+}
 .p-hdl { display: flex; align-items: center; gap: 8px; }
 .p-logo { width: 22px; height: 22px; border-radius: 6px; overflow: hidden; border: 1px solid rgba(108,95,255,0.3); }
 .p-logo img { width: 100%; height: 100%; display: block; }
@@ -176,23 +238,23 @@ nav {
 .p-rl-pct { font-size: 13px; font-weight: 800; }
 .p-mini { width: 70px; height: 2px; background: #2a2a2a; border-radius: 1px; overflow: hidden; }
 .p-mini-f { height: 100%; border-radius: 1px; }
-
 .p-ft { display: flex; align-items: center; justify-content: space-between; padding: 9px 13px; }
 .p-ft-meta { display: flex; align-items: center; gap: 4px; }
 .p-ft-ml { font-size: 9px; color: #4a9ba5; background: none; border: none; cursor: pointer; padding: 0; }
 .p-ft-dot { font-size: 9px; color: #222; }
 .p-nc { font-size: 9px; font-weight: 700; padding: 5px 12px; border-radius: 6px; background: rgba(34,197,94,0.08); color: #06b6d4; border: 1px solid rgba(34,197,94,0.2); }
 
+/* float badge top-right of popup */
 .p-float {
-  position: absolute; bottom: -14px; right: -18px;
+  position: absolute; top: 16px; right: -22px;
   background: var(--s1); border: 1px solid var(--lb);
   border-radius: 10px; padding: 9px 13px;
   display: flex; align-items: center; gap: 7px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  z-index: 4;
+  z-index: 1;
 }
 .pf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--live); box-shadow: 0 0 5px rgba(0,229,160,0.5); animation: blink 2s infinite; }
-.pf-txt { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: var(--live); }
+.pf-txt { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: var(--live); white-space: nowrap; }
 
 /* ── NOTIFY STRIP ── */
 .notify-strip {
@@ -200,50 +262,89 @@ nav {
   border-top: 1px solid var(--b); border-bottom: 1px solid var(--b);
   background: var(--s1);
   padding: 28px 48px;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 24px; flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: space-between; gap: 32px;
+  flex-wrap: wrap;
 }
 .ns-left { max-width: 480px; }
-.ns-eye { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--acc); margin-bottom: 6px; }
-.ns-h { font-size: 18px; font-weight: 700; color: var(--t); letter-spacing: -0.3px; margin-bottom: 6px; }
+.ns-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--acc); margin-bottom: 6px;
+}
+.ns-title { font-size: 17px; font-weight: 700; color: var(--t); letter-spacing: -0.4px; margin-bottom: 6px; }
 .ns-sub { font-size: 13px; color: var(--t2); line-height: 1.55; }
-.ns-form { display: flex; gap: 8px; flex-shrink: 0; }
+.ns-sub span { color: var(--live); font-weight: 600; }
+.ns-right { flex-shrink: 0; }
+.ns-form { display: flex; gap: 8px; }
 .ns-input {
   padding: 11px 16px; border-radius: 9px;
   background: var(--s2); color: var(--t);
-  border: 1px solid var(--bm); font-size: 13px;
-  font-family: 'Space Grotesk', sans-serif;
-  outline: none; width: 240px;
-  transition: border-color 0.15s;
+  border: 1px solid var(--bm); outline: none;
+  font-size: 13px; font-family: 'Space Grotesk', sans-serif;
+  transition: border-color 0.15s; width: 240px;
 }
 .ns-input::placeholder { color: var(--t3); }
 .ns-input:focus { border-color: var(--ab); }
-.ns-btn { padding: 11px 20px; border-radius: 9px; background: var(--acc); color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: all 0.15s; white-space: nowrap; }
-.ns-btn:hover { background: #7D71FF; }
-.ns-success { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--live); display: none; align-items: center; gap: 7px; padding: 11px 0; }
-.ns-success::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 6px rgba(0,229,160,0.5); flex-shrink: 0; }
+.ns-btn {
+  padding: 11px 20px; border-radius: 9px;
+  background: var(--acc); color: #fff; border: none;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  transition: all 0.15s ease; white-space: nowrap;
+}
+.ns-btn:hover { background: #7D71FF; transform: translateY(-1px); }
+.ns-success {
+  display: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--live);
+  padding: 11px 0;
+}
 
-/* ── SHARED SECTION ── */
+/* ── SHARED SECTION STYLES ── */
 .wrap { max-width: 1100px; margin: 0 auto; }
 .sec { position: relative; z-index: 1; padding: 96px 48px; border-top: 1px solid var(--b); }
-.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--acc); margin-bottom: 14px; }
-.sh2 { font-size: clamp(28px, 3.5vw, 44px); font-weight: 700; line-height: 1.1; letter-spacing: -1px; color: var(--t); margin-bottom: 14px; }
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--acc); margin-bottom: 14px;
+}
+.sh2 {
+  font-size: clamp(28px, 3.5vw, 44px); font-weight: 700;
+  line-height: 1.1; letter-spacing: -1px; margin-bottom: 14px;
+}
 .sh2 em { font-style: normal; color: var(--live); }
 .ssub { font-size: 15px; color: var(--t2); line-height: 1.65; max-width: 480px; margin-bottom: 52px; }
 
 /* ── FEATURES ── */
-.feat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--bm); border-radius: 16px; overflow: hidden; border: 1px solid var(--bm); }
+.feat-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 1px; background: var(--bm);
+  border-radius: 16px; overflow: hidden; border: 1px solid var(--bm);
+}
 .fc { background: var(--s1); padding: 28px 24px; transition: background 0.2s; }
 .fc:hover { background: var(--s2); }
-.fc-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--ad); border: 1px solid var(--ab); display: flex; align-items: center; justify-content: center; font-size: 15px; margin-bottom: 16px; }
+.fc-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: var(--ad); border: 1px solid var(--ab);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; margin-bottom: 16px;
+}
 .fc-title { font-size: 14px; font-weight: 700; color: var(--t); margin-bottom: 8px; letter-spacing: -0.2px; }
 .fc-body { font-size: 13px; color: var(--t2); line-height: 1.65; margin-bottom: 12px; }
-.fc-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; display: inline-block; padding: 2px 8px; border-radius: 4px; background: var(--ld); color: var(--live); border: 1px solid var(--lb); }
-.fc-tag.claude { background: var(--ad); color: var(--acc); border-color: var(--ab); }
+.fc-tag {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  background: var(--ld); color: var(--live); border: 1px solid var(--lb);
+}
+.fc-tag.c { background: var(--ad); color: var(--acc); border-color: var(--ab); }
 
 /* ── PLATFORMS ── */
 .plat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
-.plat-card { background: var(--s1); border: 1px solid var(--bm); border-radius: 14px; padding: 24px 20px; display: flex; flex-direction: column; gap: 16px; }
+.plat-card {
+  background: var(--s1); border: 1px solid var(--bm);
+  border-radius: 14px; padding: 24px 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
 .plat-hd { display: flex; align-items: center; gap: 9px; }
 .plat-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 5px rgba(0,229,160,0.4); flex-shrink: 0; }
 .plat-name { font-size: 14px; font-weight: 700; color: var(--t); letter-spacing: -0.2px; }
@@ -258,7 +359,10 @@ nav {
 /* ── COMPARE ── */
 .cmp-tbl { max-width: 720px; border: 1px solid var(--bm); border-radius: 14px; overflow: hidden; }
 .cmp-head { display: grid; grid-template-columns: 1fr 130px 130px; padding: 12px 20px; background: var(--s2); border-bottom: 1px solid var(--b); }
-.cmp-head span { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: 0.7px; text-align: center; }
+.cmp-head span {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;
+  color: var(--t3); text-transform: uppercase; letter-spacing: 0.7px; text-align: center;
+}
 .cmp-head span:first-child { text-align: left; }
 .cmp-r { display: grid; grid-template-columns: 1fr 130px 130px; padding: 12px 20px; border-bottom: 1px solid var(--b); align-items: center; background: var(--s1); }
 .cmp-r:last-child { border-bottom: none; }
@@ -272,15 +376,19 @@ nav {
 /* ── ROADMAP ── */
 .road-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
 .road-card { background: var(--s1); border: 1px solid var(--bm); border-radius: 14px; padding: 24px; }
-.road-ver { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: var(--acc); background: var(--ad); border: 1px solid var(--ab); display: inline-block; padding: 3px 8px; border-radius: 5px; margin-bottom: 14px; }
+.road-ver {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;
+  color: var(--acc); background: var(--ad); border: 1px solid var(--ab);
+  display: inline-block; padding: 3px 8px; border-radius: 5px; margin-bottom: 14px;
+}
 .road-ver.current { color: var(--live); background: var(--ld); border-color: var(--lb); }
 .road-title { font-size: 14px; font-weight: 700; color: var(--t); margin-bottom: 14px; letter-spacing: -0.2px; }
-.road-items { display: flex; flex-direction: column; gap: 7px; }
+.road-items { display: flex; flex-direction: column; gap: 8px; }
 .road-item { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: var(--t2); line-height: 1.5; }
-.road-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--live); flex-shrink: 0; margin-top: 5px; }
-.road-sq  { width: 5px; height: 5px; border-radius: 1px; background: var(--acc); flex-shrink: 0; margin-top: 5px; }
-.road-dim { color: var(--t3); }
-.road-dim .road-sq { background: var(--t3); }
+.ri-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--live); flex-shrink: 0; margin-top: 5px; }
+.ri-sq { width: 5px; height: 5px; border-radius: 1px; background: var(--acc); flex-shrink: 0; margin-top: 5px; }
+.ri-dim { color: var(--t3); }
+.ri-dim .ri-sq { background: var(--t3); }
 
 /* ── ABOUT ── */
 .about-card { max-width: 560px; background: var(--s1); border: 1px solid var(--bm); border-radius: 16px; padding: 40px; }
@@ -299,7 +407,11 @@ nav {
 .cta-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--t3); margin-top: 16px; }
 
 /* ── FOOTER ── */
-footer { position: relative; z-index: 1; border-top: 1px solid var(--b); padding: 26px 48px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+footer {
+  position: relative; z-index: 1;
+  border-top: 1px solid var(--b); padding: 26px 48px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
 .f-left { display: flex; align-items: center; gap: 12px; }
 .f-logo { width: 20px; height: 20px; border-radius: 5px; overflow: hidden; border: 1px solid var(--ab); }
 .f-logo img { width: 100%; height: 100%; display: block; }
@@ -313,22 +425,24 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--b); padding
 @media (max-width: 960px) {
   nav { padding: 14px 20px; }
   .nl { display: none; }
-  .hero-wrap { flex-direction: column; padding: 100px 20px 60px; gap: 48px; align-items: flex-start; }
-  .notify-strip { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
-  .ns-form { width: 100%; }
-  .ns-input { flex: 1; width: auto; }
+  .hero-wrap { flex-direction: column; padding: 110px 20px 60px; gap: 48px; }
+  .hr { width: 100%; display: flex; justify-content: center; }
+  .notify-strip { padding: 24px 20px; flex-direction: column; gap: 20px; }
+  .ns-input { width: 200px; }
   .sec { padding: 64px 20px; }
   .feat-grid { grid-template-columns: 1fr 1fr; }
   .plat-grid { grid-template-columns: 1fr 1fr; }
   .road-grid { grid-template-columns: 1fr; }
+  .cta-sec { padding: 80px 20px; }
   footer { padding: 20px; flex-direction: column; align-items: flex-start; }
 }
 @media (max-width: 600px) {
   .feat-grid { grid-template-columns: 1fr; }
   .plat-grid { grid-template-columns: 1fr; }
-  .popup-clip { width: 260px; }
-  .popup { width: 260px; }
-  .cta-sec { padding: 80px 20px; }
+  .popup { width: 268px; }
+  .p-float { right: -10px; }
+  .ns-form { flex-direction: column; }
+  .ns-input { width: 100%; }
 }
 </style>
 </head>
@@ -344,7 +458,9 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--b); padding
 <!-- NAV -->
 <nav>
   <a class="nb" href="#">
-    <div class="nb-logo"><img src="https://raw.githubusercontent.com/anu-ship-it/TokenPulse/main/icons/icon48.png" alt="TokenPulse"></div>
+    <div class="nb-logo">
+      <img src="https://raw.githubusercontent.com/anu-ship-it/TokenPulse/main/icons/icon48.png" alt="TokenPulse">
+    </div>
     <span class="nb-name">TokenPulse</span>
     <span class="nb-tag">alpha</span>
   </a>
@@ -386,112 +502,122 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--b); padding
     </div>
   </div>
 
-  <!-- POPUP — peek at rest, full reveal on hover -->
+  <!-- POPUP — clipped hover card -->
   <div class="hr">
-    <div class="popup-clip">
-      <div class="popup-mask"></div>
-      <div class="popup-hint">Hover to explore ↓</div>
-      <div class="popup">
-        <div class="p-hd">
-          <div class="p-hdl">
-            <div class="p-logo"><img src="https://raw.githubusercontent.com/anu-ship-it/TokenPulse/main/icons/icon48.png" alt=""></div>
-            <span class="p-appname">TokenPulse</span>
-          </div>
-          <div class="p-hdr">
-            <div class="p-dot"></div>
-            <div class="p-badge">Claude</div>
-            <div class="p-icons">
-              <span class="p-ic">💡</span>
-              <span class="p-ic">↻</span>
-              <span class="p-ic">⚙</span>
-            </div>
-          </div>
-        </div>
-        <div class="p-sec">
-          <div class="p-stitle">Context Window</div>
-          <div class="p-ctx-lbl">TOKENS USED</div>
-          <div class="p-ctx-hero">
-            <span class="p-ctx-val">~10k</span>
-            <span class="p-ctx-lim">200k limit</span>
-          </div>
-          <div class="p-ctx-meta">
-            <span class="rem">~190k remaining</span>
-            <span>5% used</span>
-          </div>
-          <div class="p-bar"><div class="p-bar-fill" style="width:5%;background:#06b6d4"></div></div>
-          <div class="p-bar-ft">
-            <span>0</span>
-            <span class="p-bar-status">HEALTHY</span>
-            <span>200k</span>
-          </div>
-        </div>
-        <div class="p-sec">
-          <div class="p-stitle">Estimated Cost · Sonnet 4</div>
-          <div class="p-card">
-            <div class="p-row">
-              <div><div class="p-rn">This conversation</div><div class="p-rs">Input tokens only</div></div>
-              <div class="p-rv">$0.031</div>
-            </div>
-            <div class="p-row">
-              <div><div class="p-rn">Today</div><div class="p-rs">Peak usage · all chats</div></div>
-              <div class="p-rv">$0.046</div>
-            </div>
-            <div class="p-row">
-              <div><div class="p-rn">This week</div><div class="p-rs">Last 7 days</div></div>
-              <div class="p-rv">$0.114</div>
-            </div>
-          </div>
-        </div>
-        <div class="p-sec">
-          <div class="p-stitle">Rate Limits</div>
-          <div class="p-card">
-            <div class="p-row">
-              <div><div class="p-rn">5-Hour Session</div><div class="p-rs">—</div></div>
-              <div class="p-rl-r">
-                <span class="p-rl-pct" style="color:#06b6d4">0%</span>
-                <div class="p-mini"><div class="p-mini-f" style="width:0%;background:#06b6d4"></div></div>
-              </div>
-            </div>
-            <div class="p-row">
-              <div><div class="p-rn">7-Day Weekly</div><div class="p-rs">Resets in 88h 46m</div></div>
-              <div class="p-rl-r">
-                <span class="p-rl-pct" style="color:#06b6d4">10%</span>
-                <div class="p-mini"><div class="p-mini-f" style="width:10%;background:#06b6d4"></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="p-ft">
-          <div class="p-ft-meta">
-            <button class="p-ft-ml">⭐ review</button>
-            <span class="p-ft-dot">·</span>
-            <button class="p-ft-ml">help</button>
-          </div>
-          <button class="p-nc">+ New chat</button>
-        </div>
-      </div>
-    </div>
     <div class="p-float">
       <div class="pf-dot"></div>
       <span class="pf-txt">No API key required</span>
     </div>
+
+    <div class="popup">
+      <div class="p-hd">
+        <div class="p-hdl">
+          <div class="p-logo">
+            <img src="https://raw.githubusercontent.com/anu-ship-it/TokenPulse/main/icons/icon48.png" alt="">
+          </div>
+          <span class="p-appname">TokenPulse</span>
+        </div>
+        <div class="p-hdr">
+          <div class="p-dot"></div>
+          <div class="p-badge">Claude</div>
+          <div class="p-icons">
+            <span class="p-ic">💡</span>
+            <span class="p-ic">↻</span>
+            <span class="p-ic">⚙</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-sec">
+        <div class="p-stitle">Context Window</div>
+        <div class="p-ctx-lbl">TOKENS USED</div>
+        <div class="p-ctx-hero">
+          <span class="p-ctx-val">~10k</span>
+          <span class="p-ctx-lim">200k limit</span>
+        </div>
+        <div class="p-ctx-meta">
+          <span class="rem">~190k remaining</span>
+          <span>5% used</span>
+        </div>
+        <div class="p-bar"><div class="p-bar-fill" style="width:5%;background:#06b6d4"></div></div>
+        <div class="p-bar-ft">
+          <span>0</span>
+          <span class="p-bar-status">HEALTHY</span>
+          <span>200k</span>
+        </div>
+      </div>
+
+      <div class="p-sec">
+        <div class="p-stitle">Estimated Cost · Sonnet 4</div>
+        <div class="p-card">
+          <div class="p-row">
+            <div><div class="p-rn">This conversation</div><div class="p-rs">Input tokens only</div></div>
+            <div class="p-rv">$0.031</div>
+          </div>
+          <div class="p-row">
+            <div><div class="p-rn">Today</div><div class="p-rs">Peak usage · all chats</div></div>
+            <div class="p-rv">$0.046</div>
+          </div>
+          <div class="p-row">
+            <div><div class="p-rn">This week</div><div class="p-rs">Last 7 days</div></div>
+            <div class="p-rv">$0.114</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rate limits starts here — fades into gradient, creating curiosity -->
+      <div class="p-sec">
+        <div class="p-stitle">Rate Limits</div>
+        <div class="p-card">
+          <div class="p-row">
+            <div><div class="p-rn">5-Hour Session</div><div class="p-rs">—</div></div>
+            <div class="p-rl-r">
+              <span class="p-rl-pct" style="color:#06b6d4">0%</span>
+              <div class="p-mini"><div class="p-mini-f" style="width:0%;background:#06b6d4"></div></div>
+            </div>
+          </div>
+          <div class="p-row">
+            <div><div class="p-rn">7-Day Weekly</div><div class="p-rs">Resets in 88h 46m</div></div>
+            <div class="p-rl-r">
+              <span class="p-rl-pct" style="color:#06b6d4">10%</span>
+              <div class="p-mini"><div class="p-mini-f" style="width:10%;background:#06b6d4"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-ft">
+        <div class="p-ft-meta">
+          <button class="p-ft-ml">⭐ review</button>
+          <span class="p-ft-dot">·</span>
+          <button class="p-ft-ml">help</button>
+        </div>
+        <button class="p-nc">+ New chat</button>
+      </div>
+    </div>
+
+    <div class="hr-hint">Install to see the rest →</div>
   </div>
 </div>
 </div>
 
 <!-- NOTIFY STRIP -->
-<div class="notify-strip">
+<div class="notify-strip" id="notify">
   <div class="ns-left">
-    <div class="ns-eye">Coming soon</div>
-    <div class="ns-h">More platforms. More models. More depth.</div>
-    <div class="ns-sub">Firefox support, per-model breakdowns, CSV export, and more AI platforms as they grow. Get notified when they ship.</div>
+    <div class="ns-eyebrow">Coming soon</div>
+    <div class="ns-title">More platforms. More models. More depth.</div>
+    <div class="ns-sub">
+      Firefox support, weekly summaries, CSV export, and
+      <span>more AI platforms</span> are on the roadmap.
+      Drop your email and we'll notify you when they ship.
+    </div>
   </div>
-  <div>
-    <form class="ns-form" id="notify-form">
-      <input class="ns-input" type="email" id="notify-email" placeholder="your@email.com" required>
-      <button class="ns-btn" type="submit">Notify me</button>
-    </form>
-    <div class="ns-success" id="notify-success">You're on the list — we'll let you know when it ships</div>
+  <div class="ns-right">
+    <div class="ns-form" id="ns-form">
+      <input class="ns-input" type="email" id="ns-email" placeholder="you@example.com">
+      <button class="ns-btn" id="ns-btn">Notify me</button>
+    </div>
+    <div class="ns-success" id="ns-success">✓ You're on the list. We'll let you know when things ship.</div>
   </div>
 </div>
 
@@ -502,12 +628,42 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--b); padding
     <h2 class="sh2">Everything you need to<br><em>stay ahead of the limit.</em></h2>
     <p class="ssub">Built for anyone who writes long documents, runs deep research sessions, or just has long conversations across AI platforms.</p>
     <div class="feat-grid">
-      <div class="fc"><div class="fc-icon">📊</div><div class="fc-title">Live Token Bar</div><div class="fc-body">A slim bar above every input box shows how much context you have left — updates with every message.</div><span class="fc-tag">All 4 platforms</span></div>
-      <div class="fc"><div class="fc-icon">⚡</div><div class="fc-title">Real Rate Limit Data</div><div class="fc-body">Pulls your actual 5-hour session and 7-day weekly usage from Claude's internal API. Exact numbers, exact reset times.</div><span class="fc-tag claude">Claude only</span></div>
-      <div class="fc"><div class="fc-icon">🔔</div><div class="fc-title">Smart Notifications</div><div class="fc-body">Alerts at 75%, 90%, and 100% — threshold-based not timer-based. Fires once per crossing, resets when usage drops.</div><span class="fc-tag">All 4 platforms</span></div>
-      <div class="fc"><div class="fc-icon">📅</div><div class="fc-title">Daily Usage History</div><div class="fc-body">Records peak token usage per day, per platform. No setup — works silently in the background as you chat.</div><span class="fc-tag">All 4 platforms</span></div>
-      <div class="fc"><div class="fc-icon">💰</div><div class="fc-title">Estimated Cost</div><div class="fc-body">See estimated spend for this conversation, today, and this week. Model-aware pricing across all supported platforms.</div><span class="fc-tag">All 4 platforms</span></div>
-      <div class="fc"><div class="fc-icon">🔒</div><div class="fc-title">100% Private</div><div class="fc-body">All data stays on your device. No accounts, no tracking, no analytics. Uses your existing browser session — nothing else.</div><span class="fc-tag">All 4 platforms</span></div>
+      <div class="fc">
+        <div class="fc-icon">📊</div>
+        <div class="fc-title">Live Token Bar</div>
+        <div class="fc-body">A slim bar above every input box shows how much context window you have left — updates with every message.</div>
+        <span class="fc-tag">All 4 platforms</span>
+      </div>
+      <div class="fc">
+        <div class="fc-icon">⚡</div>
+        <div class="fc-title">Real Rate Limit Data</div>
+        <div class="fc-body">Pulls your actual 5-hour session and 7-day weekly usage from Claude's internal API. Exact percentages, exact reset countdowns.</div>
+        <span class="fc-tag c">Claude only</span>
+      </div>
+      <div class="fc">
+        <div class="fc-icon">🔔</div>
+        <div class="fc-title">Smart Notifications</div>
+        <div class="fc-body">Alerts at 75%, 90%, and 100% — threshold-based, not timer-based. Fires once per crossing, resets when usage drops.</div>
+        <span class="fc-tag">All 4 platforms</span>
+      </div>
+      <div class="fc">
+        <div class="fc-icon">📅</div>
+        <div class="fc-title">Daily Usage History</div>
+        <div class="fc-body">Records peak token usage per day, per platform. No setup — works silently in the background as you chat.</div>
+        <span class="fc-tag">All 4 platforms</span>
+      </div>
+      <div class="fc">
+        <div class="fc-icon">💰</div>
+        <div class="fc-title">Estimated Cost</div>
+        <div class="fc-body">See estimated spend for this conversation, today, and this week. Model-aware pricing keeps it accurate as you switch.</div>
+        <span class="fc-tag">All 4 platforms</span>
+      </div>
+      <div class="fc">
+        <div class="fc-icon">🔒</div>
+        <div class="fc-title">100% Private</div>
+        <div class="fc-body">All data stays on your device. No accounts, no tracking, no analytics. Uses your existing browser session — nothing else.</div>
+        <span class="fc-tag">All 4 platforms</span>
+      </div>
     </div>
   </div>
 </section>
@@ -517,7 +673,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--b); padding
   <div class="wrap">
     <div class="eyebrow">Platform support</div>
     <h2 class="sh2">Four platforms.<br><em>One extension.</em></h2>
-    <p class="ssub">Core tracking works everywhere. Claude's internal API unlocks rate limits and countdowns that no other platform exposes.</p>
+    <p class="ssub">Core tracking works everywhere. Claude's internal API unlocks extra depth on top — rate limits and reset countdowns that no other platform exposes.</p>
     <div class="plat-grid">
       <div class="plat-card">
         <div class="plat-hd"><div class="plat-dot"></div><div class="plat-name">Claude</div></div>
@@ -580,7 +736,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--b); padding
   <div class="wrap">
     <div class="eyebrow">Compare</div>
     <h2 class="sh2">Why TokenPulse<br><em>covers more ground.</em></h2>
-    <p class="ssub">Most token trackers only work on one platform and require an API key. TokenPulse works on four — no key required.</p>
+    <p class="ssub">Most token trackers only work on one platform and require an API key. TokenPulse works on four with no key required.</p>
     <div class="cmp-tbl">
       <div class="cmp-head"><span>Feature</span><span>TokenPulse</span><span>Others</span></div>
       <div class="cmp-r"><div class="cmp-feat">Works on Claude</div><div class="cmp-cell ck">✓</div><div class="cmp-cell ck">✓</div></div>
@@ -602,38 +758,38 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--b); padding
   <div class="wrap">
     <div class="eyebrow">Roadmap</div>
     <h2 class="sh2">Where this is going.<br><em>More platforms. More depth.</em></h2>
-    <p class="ssub">Actively developed. Here's what's shipped, what's coming next, and what's on the horizon.</p>
+    <p class="ssub">TokenPulse is actively developed. Here's what's shipped, what's next, and what's on the horizon.</p>
     <div class="road-grid">
       <div class="road-card">
         <div class="road-ver current">v2.0 — Current</div>
         <div class="road-title">Four-platform baseline</div>
         <div class="road-items">
-          <div class="road-item"><div class="road-dot"></div>Claude + ChatGPT + Gemini + DeepSeek</div>
-          <div class="road-item"><div class="road-dot"></div>Real Claude API rate limits</div>
-          <div class="road-item"><div class="road-dot"></div>Live in-page token bar</div>
-          <div class="road-item"><div class="road-dot"></div>Smart threshold notifications</div>
-          <div class="road-item"><div class="road-dot"></div>Daily usage history</div>
-          <div class="road-item"><div class="road-dot"></div>Estimated cost tracking</div>
+          <div class="road-item"><div class="ri-dot"></div>Claude + ChatGPT + Gemini + DeepSeek</div>
+          <div class="road-item"><div class="ri-dot"></div>Real Claude API rate limits</div>
+          <div class="road-item"><div class="ri-dot"></div>Live in-page token bar</div>
+          <div class="road-item"><div class="ri-dot"></div>Smart threshold notifications</div>
+          <div class="road-item"><div class="ri-dot"></div>Daily usage history</div>
+          <div class="road-item"><div class="ri-dot"></div>Estimated cost tracking</div>
         </div>
       </div>
       <div class="road-card">
         <div class="road-ver">v2.1 — Next</div>
         <div class="road-title">Smarter alerts, broader reach</div>
         <div class="road-items">
-          <div class="road-item"><div class="road-sq"></div>Firefox support</div>
-          <div class="road-item"><div class="road-sq"></div>Response-ready notification</div>
-          <div class="road-item"><div class="road-sq"></div>Weekly usage summary</div>
-          <div class="road-item"><div class="road-sq"></div>Per-model breakdowns</div>
+          <div class="road-item"><div class="ri-sq"></div>Firefox support</div>
+          <div class="road-item"><div class="ri-sq"></div>Response-ready notification</div>
+          <div class="road-item"><div class="ri-sq"></div>Weekly usage summary</div>
+          <div class="road-item"><div class="ri-sq"></div>Usage export (CSV)</div>
         </div>
       </div>
       <div class="road-card">
         <div class="road-ver">Future</div>
         <div class="road-title">More platforms, more models</div>
         <div class="road-items">
-          <div class="road-item road-dim"><div class="road-sq"></div>Usage export (CSV)</div>
-          <div class="road-item road-dim"><div class="road-sq"></div>Keyboard shortcut to open popup</div>
-          <div class="road-item road-dim"><div class="road-sq"></div>More AI platforms as they grow</div>
-          <div class="road-item road-dim"><div class="road-sq"></div>Cloud sync across devices</div>
+          <div class="road-item ri-dim"><div class="ri-sq"></div>More AI platforms as they grow</div>
+          <div class="road-item ri-dim"><div class="ri-sq"></div>Per-model usage breakdowns</div>
+          <div class="road-item ri-dim"><div class="ri-sq"></div>Keyboard shortcut to open popup</div>
+          <div class="road-item ri-dim"><div class="ri-sq"></div>Cross-device sync</div>
         </div>
       </div>
     </div>
@@ -670,7 +826,9 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--b); padding
 <!-- FOOTER -->
 <footer>
   <div class="f-left">
-    <div class="f-logo"><img src="https://raw.githubusercontent.com/anu-ship-it/TokenPulse/main/icons/icon48.png" alt="TokenPulse"></div>
+    <div class="f-logo">
+      <img src="https://raw.githubusercontent.com/anu-ship-it/TokenPulse/main/icons/icon48.png" alt="TokenPulse">
+    </div>
     <span class="f-name">TokenPulse</span>
     <span class="f-copy">© 2026 · Built by Anoop Kumar & Mansi Rathore · Alpha</span>
   </div>
@@ -683,31 +841,34 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--b); padding
 </footer>
 
 <script>
-document.getElementById('notify-form').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const email = document.getElementById('notify-email').value;
-  const btn = this.querySelector('button');
+document.getElementById('ns-btn').addEventListener('click', async () => {
+  const email = document.getElementById('ns-email').value.trim();
+  if (!email || !email.includes('@')) {
+    document.getElementById('ns-email').style.borderColor = '#EF4444';
+    return;
+  }
+  const btn = document.getElementById('ns-btn');
   btn.textContent = 'Sending...';
   btn.disabled = true;
   try {
     const res = await fetch('https://formspree.io/f/xqeoqzdg', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ email, source: 'notify_strip' })
+      body: JSON.stringify({ email, type: 'notify', source: 'marketing_site' }),
     });
     if (res.ok) {
-      document.getElementById('notify-form').style.display = 'none';
-      const s = document.getElementById('notify-success');
-      s.style.display = 'flex';
+      document.getElementById('ns-form').style.display = 'none';
+      document.getElementById('ns-success').style.display = 'block';
     } else {
       btn.textContent = 'Notify me';
       btn.disabled = false;
     }
-  } catch(_) {
+  } catch (_) {
     btn.textContent = 'Notify me';
     btn.disabled = false;
   }
 });
 </script>
+
 </body>
 </html>
