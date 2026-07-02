@@ -1,7 +1,7 @@
 // Set logo via extension URL so relative paths never break
 const logoEl = document.getElementById('nav-logo');
 if (logoEl && typeof chrome !== 'undefined' && chrome.runtime) {
-  logoEl.src = chrome.runtime.getURL('icons/icon48.png');
+  logoEl.src = chrome.runtime.getURL('icons/icon128.png');
 }
 
 let cur = 0;
