@@ -43,20 +43,43 @@ function triggerUsageFetch() {
 
 // ── Messages ───────────────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // Cases that are fire-and-forget (no sendResponse needed)
+  // must NOT return true — returning true tells Chrome to keep
+  // the channel open waiting for a response that never comes.
+
+  if (msg.type === "CLAUDE_USAGE_RESULT") {
+    // Fire and forget — no response needed
+    (async () => {
+      if (msg.usage) {
+        await Storage.saveUsage(msg.usage);
+        await checkRateLimitNotifications(msg.usage);
+      }
+    })();
+    return false; // channel can close immediately
+  }
+
+  if (msg.type === "RESPONSE_READY") {
+    // Fire and forget — no response needed
+    (async () => {
+      const settings = await Storage.getSettings();
+      if (settings.notify_response_ready === false) return;
+      chrome.notifications.create("tt_response_ready", {
+        type: "basic",
+        iconUrl: ICON,
+        title: `${msg.platformName} — Response ready`,
+        message: "Your response has finished generating. Switch back to continue.",
+        priority: 1,
+      });
+    })();
+    return false; // channel can close immediately
+  }
+
+  // All remaining cases send a response — return true to keep channel open
   (async () => {
     switch (msg.type) {
 
-      case "CLAUDE_USAGE_RESULT": {
-        if (msg.usage) {
-          await Storage.saveUsage(msg.usage);
-          await checkRateLimitNotifications(msg.usage);
-        }
-        break;
-      }
-
       case "CONTEXT_UPDATE": {
         await Storage.saveContext(msg.platform, { used: msg.used, limit: msg.limit });
-        // Context notifications fire immediately on every update — no timer delay
         await checkContextNotifications(msg.platform, msg.used, msg.limit);
         sendResponse({ ok: true });
         break;
@@ -86,22 +109,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         break;
       }
 
-      case "RESPONSE_READY": {
-        const settings = await Storage.getSettings();
-        if (settings.notify_response_ready === false) break;
-
-        chrome.notifications.create("tt_response_ready", {
-          type: "basic",
-          iconUrl: ICON,
-          title: `${msg.platformName} — Response ready`,
-          message: "Your response has finished generating. Switch back to continue.",
-          priority: 1,
-        });
+      default: {
+        // Unknown message type — respond so the channel closes cleanly
+        sendResponse({ ok: false, error: "unknown message type" });
         break;
       }
     }
   })();
-  return true;
+
+  return true; // keep channel open for the async sendResponse above
 });
 
 // ── Notification helper ────────────────────────────────────────────
@@ -116,15 +132,13 @@ function notify(id, title, message, priority) {
 }
 
 // ── Threshold tracker ──────────────────────────────────────────────
-// Only notifies when crossing a NEW higher threshold.
-// Resets when usage drops below lowest threshold.
 const THRESHOLDS = [50, 75, 90, 100];
 
 async function shouldNotify(stateKey, currentPct, settings) {
   const enabled = THRESHOLDS.filter(t => {
-    if (t === 50) return settings.notify_50;
-    if (t === 75) return settings.notify_75;
-    if (t === 90) return settings.notify_90;
+    if (t === 50)  return settings.notify_50;
+    if (t === 75)  return settings.notify_75;
+    if (t === 90)  return settings.notify_90;
     if (t === 100) return settings.notify_100;
     return false;
   });
@@ -135,14 +149,12 @@ async function shouldNotify(stateKey, currentPct, settings) {
   const lastNotified = await Storage.getLastNotified();
   const last = lastNotified[stateKey] || 0;
 
-  // Reset if dropped below all thresholds
   if (crossed === 0 && last > 0) {
     lastNotified[stateKey] = 0;
     await Storage.saveLastNotified(lastNotified);
     return null;
   }
 
-  // Only fire for a new higher threshold
   if (crossed <= 0 || crossed <= last) return null;
 
   lastNotified[stateKey] = crossed;
@@ -154,21 +166,21 @@ async function shouldNotify(stateKey, currentPct, settings) {
 async function checkRateLimitNotifications(usage) {
   const settings = await Storage.getSettings();
   const sessionPct = usage.five_hour?.utilization || 0;
-  const weeklyPct = usage.seven_day?.utilization || 0;
-  const maxPct = Math.max(sessionPct, weeklyPct);
+  const weeklyPct  = usage.seven_day?.utilization  || 0;
+  const maxPct     = Math.max(sessionPct, weeklyPct);
 
   const threshold = await shouldNotify("claude_rate", maxPct, settings);
   if (!threshold) return;
 
   const isSession = sessionPct >= weeklyPct;
-  const pct = Math.round(isSession ? sessionPct : weeklyPct);
+  const pct       = Math.round(isSession ? sessionPct : weeklyPct);
   const limitType = isSession ? "5-hour session" : "7-day weekly";
-  const priority = threshold >= 90 ? 2 : 1;
+  const priority  = threshold >= 90 ? 2 : 1;
 
   const tips = {
-    50: "You're halfway through your Claude limit.",
-    75: "Only 25% of your Claude limit remaining.",
-    90: "Almost out — consider wrapping up soon.",
+    50:  "You're halfway through your Claude limit.",
+    75:  "Only 25% of your Claude limit remaining.",
+    90:  "Almost out — consider wrapping up soon.",
     100: "Limit reached. Usage will be restricted.",
   };
 
@@ -181,12 +193,11 @@ async function checkRateLimitNotifications(usage) {
 }
 
 // ── Context window notifications ───────────────────────────────────
-// Fires immediately on every scan — no timer delay
 async function checkContextNotifications(platform, used, limit) {
   if (!used || !limit) return;
-  const settings = await Storage.getSettings();
-  const pct = Math.round((used / limit) * 100);
-  const name = platform === "claude" ? "Claude" : "ChatGPT";
+  const settings  = await Storage.getSettings();
+  const pct       = Math.round((used / limit) * 100);
+  const name      = platform === "claude" ? "Claude" : "ChatGPT";
   const remaining = Math.round((limit - used) / 1000);
 
   const threshold = await shouldNotify(`ctx_${platform}`, pct, settings);
@@ -195,9 +206,9 @@ async function checkContextNotifications(platform, used, limit) {
   const priority = threshold >= 90 ? 2 : 1;
 
   const messages = {
-    50: `~${remaining}k tokens remaining. You're halfway through this conversation's context.`,
-    75: `~${remaining}k tokens remaining. Consider starting a new chat soon.`,
-    90: `~${remaining}k tokens remaining. Context window nearly full — start a new chat.`,
+    50:  `~${remaining}k tokens remaining. You're halfway through this conversation's context.`,
+    75:  `~${remaining}k tokens remaining. Consider starting a new chat soon.`,
+    90:  `~${remaining}k tokens remaining. Context window nearly full — start a new chat.`,
     100: `Context window full. The model may lose earlier parts of your conversation.`,
   };
 
