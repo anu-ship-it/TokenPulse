@@ -294,22 +294,47 @@
   let hadActivity = false;
   let streamTimer = null;
 
-  const obs = new MutationObserver(() => {
-    // Mark that we've seen activity
-    hadActivity = true;
+  console.log("[TokenPulse] Response detector started");
 
-    // Reset the 2-second silence timer
+  const obs = new MutationObserver(() => {
+    hadActivity = true;
     clearTimeout(streamTimer);
     streamTimer = setTimeout(() => {
-      // 2 seconds of silence after activity = response done
       if (hadActivity) {
         hadActivity = false;
+        console.log("[TokenPulse] Silence detected, visibility:", document.visibilityState);
         onResponseReady();
       }
     }, 2000);
   });
 
   obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+
+function onResponseReady() {
+  console.log("[TokenPulse] onResponseReady called, visibility:", document.visibilityState, "tokens:", lastTokenCount);
+  
+  if (document.visibilityState !== "hidden") {
+    console.log("[TokenPulse] Tab visible — skipping notification");
+    return;
+  }
+  if (lastTokenCount < 50) {
+    console.log("[TokenPulse] Too few tokens — skipping");
+    return;
+  }
+
+  const platformName = IS_CLAUDE ? "Claude" : IS_GEMINI ? "Gemini" : IS_DEEPSEEK ? "DeepSeek" : "ChatGPT";
+  console.log("[TokenPulse] Sending RESPONSE_READY for", platformName);
+
+  try {
+    chrome.runtime.sendMessage({
+      type: "RESPONSE_READY",
+      platform: PLATFORM,
+      platformName,
+    });
+  } catch (e) {
+    console.log("[TokenPulse] sendMessage failed:", e);
+  }
 }
 
   // ── Bar injection ──────────────────────────────────────────────
