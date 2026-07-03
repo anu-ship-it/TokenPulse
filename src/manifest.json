@@ -54,7 +54,7 @@
     "128": "icons/icon128.png"
   },
   "web_accessible_resources": [{
-  "resources": ["icons/icon128.png", "welcome/welcome.html"],
+  "resources": ["icons/icon48.png", "welcome/welcome.js"],
   "matches": ["<all_urls>"]
 }]
 }
