@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TokenPulse — ChatGPT & Claude Tracker",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Live token & rate limit tracker for Claude, ChatGPT, Gemini and DeepSeek. ",
   "permissions": [
     "storage",
