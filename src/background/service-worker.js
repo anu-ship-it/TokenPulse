@@ -63,7 +63,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     (async () => {
       const settings = await Storage.getSettings();
       if (settings.notify_response_ready === false) return;
-      chrome.notifications.create("tt_response_ready", {
+      chrome.notifications.create("tt_response_ready", +Date.now(), {
         type: "basic",
         iconUrl: ICON,
         title: `${msg.platformName} — Response ready`,
@@ -71,6 +71,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         priority: 1,
       });
     })();
+    sendResponse({ ok: true });
     return false; // channel can close immediately
   }
 
