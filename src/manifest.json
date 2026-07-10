@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "TokenPulse — ChatGPT & Claude Tracker",
-  "version": "2.2.1",
-  "description": "Live token & rate limit tracker for Claude, ChatGPT, Gemini and DeepSeek. ",
+  "name": "TokenPulse AI",
+  "version": "2.2.2",
+  "description": "Your AI workspace for ChatGPT, Claude, Gemini, DeepSeek and more.",
   "permissions": [
     "storage",
     "alarms",
@@ -41,7 +41,7 @@
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "TokenPulse",
+    "default_title": "TokenPulse AI",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
