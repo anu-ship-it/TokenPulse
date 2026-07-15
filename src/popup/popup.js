@@ -310,9 +310,9 @@ function renderMain(state) {
 
     <div class="footer">
       <div class="footer-meta-links">
-        <button class="meta-link" id="main-rate-btn">⭐ review</button>
+        <button class="meta-link" id="main-rate-btn">⭐ Review</button>
         <span class="meta-dot">·</span>
-        <button class="meta-link" id="main-support-btn">help</button>
+        <button class="meta-link" id="main-support-btn">Help</button>
       </div>
       <button class="new-chat" id="new-chat-btn">+ New chat</button>
     </div>
