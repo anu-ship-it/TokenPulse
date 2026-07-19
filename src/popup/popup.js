@@ -3,6 +3,7 @@
 const SUPPORTED = ["chatgpt.com", "openai.com", "claude.ai", "gemini.google.com", "chat.deepseek.com"];
 const STORE_REVIEW_URL = "https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic/reviews";
 const FORMSPREE_URL = "https://formspree.io/f/xqeoqzdg";
+const WEBSITE_URL = "https://token-pulse.in";
 
 // ── Helpers ────────────────────────────────────────────────────────
 function fk(n) {
@@ -312,6 +313,8 @@ function renderMain(state) {
       <div class="footer-meta-links">
         <button class="meta-link" id="main-rate-btn">⭐ Review</button>
         <span class="meta-dot">·</span>
+         <button class="meta-link" id="main-website-btn">🌐 Website</button>
+         <span class="meta-dot">·</span>
         <button class="meta-link" id="main-support-btn">Help</button>
       </div>
       <button class="new-chat" id="new-chat-btn">+ New chat</button>
@@ -328,6 +331,10 @@ function renderMain(state) {
     chrome.tabs.create({ url: STORE_REVIEW_URL });
     window.close();
   });
+  document.getElementById("main-website-btn").addEventListener("click", () => {
+    chrome.tabs.create({ url: WEBSITE_URL });
+    window.close();
+});
   document.getElementById("main-support-btn").addEventListener("click", () => {
     chrome.tabs.create({ url: "https://anu-ship-it.github.io/TokenPulse/support.html" });
     window.close();
