@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TokenPulse AI",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "description": "Your AI workspace for ChatGPT, Claude, Gemini, DeepSeek and more.",
   "permissions": [
     "storage",
