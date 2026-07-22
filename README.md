@@ -1,69 +1,127 @@
-# TokenPulse AI
+# TokenPulse
 
-> **Your AI workspace for ChatGPT, Claude, Gemini, DeepSeek, and more.**
-
-Monitor token usage, context windows, usage analytics, and platform-specific limits directly inside your favorite AI platforms.
+> **The open-source AI workspace that helps you understand your AI usage before your AI tells you _"You've reached your limit."_**
 
 <p align="center">
 
-[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Available-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/oimclhdbljodjkankcnalklchfcehhic)
-![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)
-![License](https://img.shields.io/badge/License-MIT-blue)
-![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
+<a href="https://www.token-pulse.in">
+<img src="https://img.shields.io/badge/Website-token--pulse.in-blue?style=for-the-badge"/>
+</a>
+
+<a href="https://chromewebstore.google.com/detail/oimclhdbljodjkankcnalklchfcehhic">
+<img src="https://img.shields.io/badge/Chrome-Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white"/>
+</a>
+
+<img src="https://img.shields.io/badge/Manifest-V3-success?style=for-the-badge"/>
+
+<img src="https://img.shields.io/badge/Open%20Source-MIT-orange?style=for-the-badge"/>
+
+<img src="https://img.shields.io/badge/Privacy-First-success?style=for-the-badge"/>
+
+<img src="https://img.shields.io/badge/Status-Active%20Development-blue?style=for-the-badge"/>
 
 </p>
 
-An open-source project by **TokenPulse**.
+---
+
+## AI platforms are becoming our daily workspace.
+
+But none of them clearly tell you:
+
+- How many tokens you've used
+- How much context is left
+- How close you are to platform limits
+- How much your prompts are costing
+- When your usage resets
+
+TokenPulse solves this by bringing real-time AI usage insights directly into your workspace.
+
+No dashboards.
+
+No API keys.
+
+No switching tabs.
+
+Just open your favorite AI platform and keep working.
 
 ---
 
-# Overview
+# Why TokenPulse?
 
-TokenPulse AI is a lightweight Chrome extension designed for AI power users.
+As developers, researchers, writers, and AI power users, we constantly hit invisible limits.
 
-Instead of switching between dashboards or guessing how much context remains, TokenPulse AI provides real-time insights directly inside supported AI platforms.
+Context windows overflow.
 
-It currently supports:
+Claude sessions end unexpectedly.
 
-- ChatGPT
-- Claude
-- Gemini
-- DeepSeek
+Large prompts fail.
 
-More AI platforms will be supported in future releases.
+Token usage becomes impossible to estimate.
+
+Every AI platform exposes different information—and some expose almost none.
+
+TokenPulse creates a consistent experience across every major AI platform so you always know what's happening before you hit a limit.
 
 ---
 
 # Features
 
-### Core Features
+### Live AI Workspace
 
 - Live token tracking
 - Real-time context window monitoring
-- Claude rate-limit tracking
+- Claude session rate-limit tracking
 - Daily usage analytics
 - Cost estimation
-- Smart usage notifications
+- Smart notifications
 - Lightweight dashboard
 - Privacy-first architecture
 
 ---
 
-## Feature Comparison
+## Supported AI Platforms
+
+| Platform | Status |
+|-----------|---------|
+| ChatGPT | ✅ Supported |
+| Claude | ✅ Supported |
+| Gemini | ✅ Supported |
+| DeepSeek | ✅ Supported |
+| Grok | 🚧 Coming Soon |
+| Perplexity | 📅 Planned |
+| Mistral | 📅 Planned |
+| OpenRouter | 📅 Planned |
+| Microsoft Copilot | 📅 Planned |
+
+---
+
+# Feature Comparison
 
 | Feature | Claude | ChatGPT | Gemini | DeepSeek |
 |---------|--------|---------|--------|----------|
-| Live in-page token bar | ✅ | ✅ | ✅ | ✅ |
-| Context window tracking | ✅ | ✅ | ✅ | ✅ |
-| Daily usage history | ✅ | ✅ | ✅ | ✅ |
-| Cost estimator | ✅ | ✅ | ✅ | ✅ |
-| Token-saving tips | ✅ | ✅ | ✅ | ✅ |
-| Smart notifications | ✅ | ✅ | ✅ | ✅ |
-| Real rate-limit data | ✅ | — | — | — |
-| Reset countdown | ✅ | — | — | — |
-| Settings dashboard | ✅ | ✅ | ✅ | ✅ |
+| Live Token Bar | ✅ | ✅ | ✅ | ✅ |
+| Context Window Tracking | ✅ | ✅ | ✅ | ✅ |
+| Daily Analytics | ✅ | ✅ | ✅ | ✅ |
+| Cost Estimation | ✅ | ✅ | ✅ | ✅ |
+| Smart Notifications | ✅ | ✅ | ✅ | ✅ |
+| Token Saving Tips | ✅ | ✅ | ✅ | ✅ |
+| Real Rate Limits | ✅ | — | — | — |
+| Reset Countdown | ✅ | — | — | — |
+| Dashboard | ✅ | ✅ | ✅ | ✅ |
 
-> Claude is currently the only supported platform that exposes real usage limits through its API. Other platforms use context window estimation.
+> Claude currently provides real usage information through its authenticated browser session. Other platforms currently rely on advanced estimation.
+
+---
+
+# Screenshots
+
+> Screenshots and GIF demonstrations will be added soon.
+
+- Live Token Bar
+- Dashboard
+- Daily Analytics
+- Claude Rate Limits
+- Settings
 
 ---
 
@@ -87,44 +145,28 @@ Compatible with:
 ## Manual Installation
 
 ```bash
-git clone https://github.com/anu-ship-it/TokenPulse
+git clone https://github.com/anu-ship-it/TokenPulse.git
 ```
 
-1. Open `chrome://extensions`
-2. Enable **Developer Mode**
-3. Click **Load unpacked**
-4. Select the project folder
+Open
+
+```
+chrome://extensions
+```
+
+Enable Developer Mode.
+
+Click **Load unpacked**.
+
+Select the project folder.
 
 ---
 
-# Project Structure
+# How TokenPulse Works
 
-```
-src/
-├── manifest.json
-├── background/
-│   └── service-worker.js
-├── content/
-│   ├── content.js
-│   └── content.css
-├── lib/
-│   ├── constants.js
-│   ├── storage.js
-│   └── tokenizer.js
-├── popup/
-│   ├── popup.html
-│   ├── popup.css
-│   └── popup.js
-├── welcome/
-│   └── welcome.html
-└── icons/
-```
+TokenPulse estimates token usage using platform-specific parsing and tokenizer logic.
 
----
-
-# How Token Counting Works
-
-TokenPulse AI estimates token usage using the commonly accepted approximation:
+General estimation:
 
 ```
 Characters ÷ 4 ≈ Tokens
@@ -134,21 +176,21 @@ Average accuracy:
 
 **±8%**
 
-Platform-specific parsing:
+Supported parsers:
 
-- Claude
 - ChatGPT
+- Claude
 - Gemini
 - DeepSeek
 
-For Claude, TokenPulse AI also retrieves actual usage information from Claude's internal API using the user's existing authenticated browser session.
+For Claude, TokenPulse also retrieves actual usage information using your existing authenticated browser session.
 
-The extension automatically displays whichever limit becomes the bottleneck:
+The extension automatically determines the active bottleneck between:
 
 - Context Window
 - Session Rate Limit
 
-This ensures users always see the most relevant limit.
+This ensures you always see the limit that actually matters.
 
 ---
 
@@ -156,28 +198,31 @@ This ensures users always see the most relevant limit.
 
 Estimated pricing uses publicly available model pricing.
 
-| Model | Price / 1M Input Tokens |
+| Model | Input Price / 1M Tokens |
 |--------|------------------------:|
 | Claude Sonnet 4 | $3.00 |
 | Claude Opus 4 | $15.00 |
 | Claude Haiku 4 | $0.80 |
 | GPT-4o | $2.50 |
 | GPT-4 | $30.00 |
-| o1 / o3 | $15.00 / $10.00 |
-| Gemini 1.5 Pro | $3.50 |
+| o1 | $15.00 |
+| o3 | $10.00 |
 | Gemini 2.0 Flash | $0.10 |
+| Gemini 1.5 Pro | $3.50 |
 | DeepSeek V3 | $0.27 |
 | DeepSeek R1 | $0.55 |
 
-Accuracy:
+Current estimation includes:
 
-- Input tokens only
-- ±8% estimation
-- Output cost not included
+- Input token cost
+- Estimated token usage
+- Approximate spending
+
+(Output pricing will be added in a future release.)
 
 ---
 
-# Notifications
+# Smart Notifications
 
 Desktop notifications help prevent unexpected context exhaustion.
 
@@ -187,64 +232,184 @@ Default thresholds:
 - 90%
 - 100%
 
-Notifications trigger only once per threshold until usage falls below the configured limit.
+Notifications trigger only once until usage falls below the configured threshold.
 
 ---
 
-# Privacy
+# Privacy First
 
-TokenPulse AI is built with a privacy-first approach.
+Privacy is one of TokenPulse's core principles.
 
-- Local storage only
-- No analytics
-- No advertisements
-- No account required
-- No external servers
-- No selling of user data
+TokenPulse:
 
-Claude rate-limit information is retrieved using the user's existing authenticated browser session.
+- Never uploads prompts
+- Never stores conversations
+- Never sends your data to external servers
+- Never requires an account
+- Never includes advertisements
+- Never sells user data
 
-For full details, see the Privacy Policy.
+All analytics remain on your device.
+
+Claude rate-limit information is obtained only through your authenticated browser session.
+
+---
+
+# Project Architecture
+
+```
+Browser
+
+   │
+
+   ▼
+
+Content Scripts
+
+   │
+
+   ▼
+
+DOM Parser
+
+   │
+
+   ▼
+
+Tokenizer
+
+   │
+
+   ▼
+
+Storage
+
+   │
+
+   ▼
+
+Dashboard
+
+   │
+
+   ▼
+
+Notifications
+```
+
+---
+
+# Vision
+
+TokenPulse isn't just another Chrome extension.
+
+Our long-term vision is to become the universal productivity layer for AI.
+
+Instead of building another chatbot, we're building tools that improve every chatbot.
+
+One dashboard.
+
+Every AI platform.
+
+Every token.
 
 ---
 
 # Roadmap
 
-## Current
+## Browser Extension
 
-- ChatGPT support
-- Claude support
-- Gemini support
-- DeepSeek support
-- Live token tracking
-- Context window monitoring
-- Cost estimation
-- Daily analytics
-- Smart notifications
+- ✅ ChatGPT
+- ✅ Claude
+- ✅ Gemini
+- ✅ DeepSeek
+- 🚧 Grok
+- 🚧 Firefox
+- 🚧 Microsoft Edge Store
+- 🚧 Safari Support
 
 ---
 
-## Planned
+## AI Workspace
 
-- Additional AI model support
-- Prompt Library
-- Response Ready notifications
-- Usage export
-- Firefox support
-- VS Code extension
-- AI productivity tools
-- Workspace enhancements
+- 🚧 Prompt Library
+- 🚧 Conversation Search
+- 🚧 Workspace Dashboard
+- 🚧 Usage Insights
+- 🚧 AI Productivity Tools
+- 🚧 Export Analytics
+
+---
+
+## Developer Ecosystem
+
+- 🚧 VS Code Extension
+- 🚧 Desktop Application
+- 🚧 Public API
+- 🚧 CLI
+- 🚧 SDK
+
+---
+
+## Team Features
+
+- 🚧 Shared Workspaces
+- 🚧 Team Analytics
+- 🚧 Organization Dashboard
+- 🚧 Usage Reports
+
+---
+
+# TokenPulse Ecosystem
+
+```
+Chrome Extension
+        │
+        ▼
+VS Code Extension
+        │
+        ▼
+Web Dashboard
+        │
+        ▼
+Desktop App
+        │
+        ▼
+Developer API
+        │
+        ▼
+Team Workspace
+```
+
+---
+
+# Project Structure
+
+```
+src/
+├── background/
+├── content/
+├── popup/
+├── welcome/
+├── lib/
+├── icons/
+└── manifest.json
+```
 
 ---
 
 # Development
 
-Built using:
+Built with:
 
 - Manifest V3
 - Vanilla JavaScript
 - HTML
 - CSS
+- Chrome Extension APIs
+- MutationObserver
+- Storage API
+- Notifications API
 
 No frameworks.
 
@@ -252,23 +417,25 @@ No external dependencies.
 
 ---
 
-## Local Development
+# Local Development
 
 ```bash
-git clone https://github.com/anu-ship-it/TokenPulse
+git clone https://github.com/anu-ship-it/TokenPulse.git
 ```
 
-Load the extension as an unpacked extension from:
+Load the extension using:
 
 ```
 chrome://extensions
 ```
 
+Enable Developer Mode and select **Load unpacked**.
+
 ---
 
 # Contributing
 
-Contributions are welcome.
+Contributions are always welcome.
 
 You can help by:
 
@@ -277,17 +444,43 @@ You can help by:
 - Improving documentation
 - Submitting pull requests
 
-Please open an issue before working on large feature additions.
+Please open an issue before starting large feature implementations.
+
+If you find TokenPulse useful, consider giving the repository a ⭐.
 
 ---
 
-# Changelog
+# FAQ
 
-See:
+### How accurate is token estimation?
 
-```
-CHANGELOG.md
-```
+Token estimation is typically within ±8% depending on the platform and conversation structure.
+
+---
+
+### Why does Claude show real limits?
+
+Claude exposes authenticated usage information through its browser session, allowing TokenPulse to display actual limits instead of estimates.
+
+---
+
+### Is my data uploaded anywhere?
+
+No.
+
+Everything remains inside your browser.
+
+---
+
+### Does TokenPulse require an API key?
+
+No.
+
+---
+
+### Does TokenPulse work offline?
+
+Most functionality works locally once the supported AI platform is loaded.
 
 ---
 
@@ -301,15 +494,28 @@ See the LICENSE file for details.
 
 # Disclaimer
 
-TokenPulse AI is an independent open-source project.
+TokenPulse is an independent open-source project.
 
 It is not affiliated with or endorsed by:
 
 - OpenAI
 - Anthropic
 - Google
-- DeepSeek
+- xAI
 - Microsoft
-- Any other AI platform
+- DeepSeek
+- Mistral AI
+- Perplexity
+- OpenRouter
 
 All trademarks belong to their respective owners.
+
+---
+
+<p align="center">
+
+Built with ❤️ by the TokenPulse community.
+
+**Understand your AI usage before your AI understands your limits.**
+
+</p>
