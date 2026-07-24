@@ -10,18 +10,19 @@
   const IS_GPT = location.hostname.includes("chatgpt.com") || location.hostname.includes("openai.com");
   const IS_GEMINI = location.hostname.includes("gemini.google.com");
   const IS_DEEPSEEK = location.hostname.includes("chat.deepseek.com");
+  const IS_GROK = location.hostname.includes("grok.com");
 
-  if (!IS_CLAUDE && !IS_GPT && !IS_GEMINI && !IS_DEEPSEEK) return;
+  if (!IS_CLAUDE && !IS_GPT && !IS_GEMINI && !IS_DEEPSEEK && !IS_GROK) return;
 
-  const PLATFORM = IS_CLAUDE ? "claude" : IS_GPT ? "chatgpt" : IS_GEMINI ? "gemini" : "deepseek";
+  const PLATFORM = IS_CLAUDE ? "claude" : IS_GPT ? "chatgpt" : IS_GEMINI ? "gemini" : IS_DEEPSEEK ? "deepseek" : "grok";
 
   let lastTokenCount = 0;
   let lastSessionId = getSessionId();
   let lastModel = "default";
   let popupShown = false;
   let rafPending = false;
-  let isStreaming     = false;
-  let streamTimer     = null;
+  let isStreaming = false;
+  let streamTimer = null;
   let lastMutationTime = 0;
 
   // ── Session ID ─────────────────────────────────────────────────
@@ -31,6 +32,10 @@
       return m ? m[1] : location.pathname;
     }
     if (IS_GPT) {
+      const m = location.pathname.match(/\/c\/([a-z0-9-]+)/i);
+      return m ? m[1] : "home";
+    }
+    if (IS_GROK) {
       const m = location.pathname.match(/\/c\/([a-z0-9-]+)/i);
       return m ? m[1] : "home";
     }
@@ -72,6 +77,13 @@
       }
       return "deepseek-default";
     }
+    if (IS_GROK) {
+      const btn = document.querySelector("#model-select-trigger");
+      const txt = btn ? btn.textContent.toLowerCase() : "";
+      if (txt.includes("heavy") || txt.includes("expert")) return "grok-4.5";
+      if (txt.includes("fast")) return "grok-4.3";
+      return "grok-default";
+    }
     // ChatGPT
     const btn = document.querySelector("[data-testid='model-switcher-dropdown-button'], button[aria-label*='GPT']");
     const txt = btn ? btn.textContent.toLowerCase() : "";
@@ -99,6 +111,7 @@
     if (IS_CLAUDE) return countClaude();
     if (IS_GEMINI) return countGemini();
     if (IS_DEEPSEEK) return countDeepSeek();
+    if (IS_GROK) return countGrok();
     return countGPT();
   }
 
@@ -151,14 +164,14 @@
   }
 
   function countDeepSeek() {
-  const msgs = document.querySelectorAll('.ds-message');
-  if (msgs.length === 0) return 0;
-  const text = Array.from(msgs).map(el => el.textContent || "").join(" ");
-  const input = document.querySelector('textarea');
-  const inputText = input ? (input.value || "").trim() : "";
-  const clean = inputText && text.includes(inputText) ? text.replace(inputText, "") : text;
-  return Tokenizer.estimate(clean.trim());
-}
+    const msgs = document.querySelectorAll('.ds-message');
+    if (msgs.length === 0) return 0;
+    const text = Array.from(msgs).map(el => el.textContent || "").join(" ");
+    const input = document.querySelector('textarea');
+    const inputText = input ? (input.value || "").trim() : "";
+    const clean = inputText && text.includes(inputText) ? text.replace(inputText, "") : text;
+    return Tokenizer.estimate(clean.trim());
+  }
 
   function countGPT() {
     const selectors = [
@@ -291,57 +304,58 @@
   }
 
   function startResponseReadyDetector() {
-  let hadActivity = false;
-  let streamTimer = null;
+    let hadActivity = false;
+    let streamTimer = null;
 
-  console.log("[TokenPulse] Response detector started");
+    console.log("[TokenPulse] Response detector started");
 
-  const obs = new MutationObserver(() => {
-    hadActivity = true;
-    clearTimeout(streamTimer);
-    streamTimer = setTimeout(() => {
-      if (hadActivity) {
-        hadActivity = false;
-        console.log("[TokenPulse] Silence detected, visibility:", document.visibilityState);
-        onResponseReady();
-      }
-    }, 2000);
-  });
-
-  obs.observe(document.body, { childList: true, subtree: true, characterData: true });
-}
-
-function onResponseReady() {
-  console.log("[TokenPulse] onResponseReady called, visibility:", document.visibilityState, "tokens:", lastTokenCount);
-  
-  if (document.visibilityState !== "hidden") {
-    console.log("[TokenPulse] Tab visible — skipping notification");
-    return;
-  }
-  if (lastTokenCount < 50) {
-    console.log("[TokenPulse] Too few tokens — skipping");
-    return;
-  }
-
-  const platformName = IS_CLAUDE ? "Claude" : IS_GEMINI ? "Gemini" : IS_DEEPSEEK ? "DeepSeek" : "ChatGPT";
-  console.log("[TokenPulse] Sending RESPONSE_READY for", platformName);
-
-  try {
-    chrome.runtime.sendMessage({
-      type: "RESPONSE_READY",
-      platform: PLATFORM,
-      platformName,
+    const obs = new MutationObserver(() => {
+      hadActivity = true;
+      clearTimeout(streamTimer);
+      streamTimer = setTimeout(() => {
+        if (hadActivity) {
+          hadActivity = false;
+          console.log("[TokenPulse] Silence detected, visibility:", document.visibilityState);
+          onResponseReady();
+        }
+      }, 2000);
     });
-  } catch (e) {
-    console.log("[TokenPulse] sendMessage failed:", e);
+
+    obs.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
-}
+
+  function onResponseReady() {
+    console.log("[TokenPulse] onResponseReady called, visibility:", document.visibilityState, "tokens:", lastTokenCount);
+
+    if (document.visibilityState !== "hidden") {
+      console.log("[TokenPulse] Tab visible — skipping notification");
+      return;
+    }
+    if (lastTokenCount < 50) {
+      console.log("[TokenPulse] Too few tokens — skipping");
+      return;
+    }
+
+    const platformName = IS_CLAUDE ? "Claude" : IS_GEMINI ? "Gemini" : IS_DEEPSEEK ? "DeepSeek" : "ChatGPT";
+    console.log("[TokenPulse] Sending RESPONSE_READY for", platformName);
+
+    try {
+      chrome.runtime.sendMessage({
+        type: "RESPONSE_READY",
+        platform: PLATFORM,
+        platformName,
+      });
+    } catch (e) {
+      console.log("[TokenPulse] sendMessage failed:", e);
+    }
+  }
 
   // ── Bar injection ──────────────────────────────────────────────
   function resolveWrapper() {
     if (IS_CLAUDE) return document.querySelector("fieldset, div[contenteditable='true']");
     if (IS_GEMINI) return document.querySelector("input-area-v2, rich-textarea");
     if (IS_DEEPSEEK) return document.querySelector('textarea');
+    if (IS_GROK) return document.querySelector(".query-bar, [data-testid='chat-input']");
     return document.querySelector("form:has(#prompt-textarea), form:has(textarea)");
   }
 
@@ -451,19 +465,19 @@ function onResponseReady() {
 
   // ── Boot ───────────────────────────────────────────────────────
   function init() {
-  injectBar();
-  startObserver();
-  startResponseReadyDetector();
-  watchSession();
-  setTimeout(scan, 800);
-  setTimeout(scan, 2500);
+    injectBar();
+    startObserver();
+    startResponseReadyDetector();
+    watchSession();
+    setTimeout(scan, 800);
+    setTimeout(scan, 2500);
 
-  if (IS_CLAUDE) {
-    fetchClaudeUsage().then(usage => {
-      if (usage) { try { chrome.runtime.sendMessage({ type: "CLAUDE_USAGE_RESULT", usage }); } catch (_) { } }
-    });
+    if (IS_CLAUDE) {
+      fetchClaudeUsage().then(usage => {
+        if (usage) { try { chrome.runtime.sendMessage({ type: "CLAUDE_USAGE_RESULT", usage }); } catch (_) { } }
+      });
+    }
   }
-}
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

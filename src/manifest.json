@@ -14,7 +14,8 @@
     "https://chat.openai.com/*",
     "https://claude.ai/*",
     "https://gemini.google.com/*",
-    "https://chat.deepseek.com/*"
+    "https://chat.deepseek.com/*",
+    "https://grok.com/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js"
@@ -26,7 +27,8 @@
         "https://chat.openai.com/*",
         "https://claude.ai/*",
         "https://gemini.google.com/*",
-        "https://chat.deepseek.com/*"
+        "https://chat.deepseek.com/*",
+        "https://grok.com/*"
       ],
       "js": [
         "lib/tokenizer.js",
