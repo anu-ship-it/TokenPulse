@@ -40,7 +40,13 @@ const TT = {
     "deepseek-r1":      128000,
     "deepseek-default": 1000000,   
     "deepseek-v4-pro":  1000000,   
-    "deepseek-v4-flash":1000000,   
+    "deepseek-v4-flash":1000000,  
+    
+    // Grok
+    
+    "grok-4.5": 500000,
+    "grok-4.3": 1000000,
+    "grok-default": 500000,
   },
   COST_PER_M: {
     "default":          3.00,
@@ -74,6 +80,11 @@ const TT = {
     "deepseek-default": 0.435,
     "deepseek-v4-pro":  0.435,     
     "deepseek-v4-flash":0.14,
+
+    // Grok
+    "grok-4.5": 2.00,
+    "grok-4.3": 1.25,
+    "grok-default": 2.00,
   },
   WARN:   70,
   DANGER: 90,
