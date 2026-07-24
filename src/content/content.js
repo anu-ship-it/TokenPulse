@@ -1,8 +1,3 @@
-/**
- * content.js v2.2.0
- * Added: Gemini support
- */
-
 (() => {
   "use strict";
 
@@ -21,8 +16,8 @@
   let lastModel = "default";
   let popupShown = false;
   let rafPending = false;
-  let isStreaming = false;
-  let streamTimer = null;
+  let isStreaming     = false;
+  let streamTimer     = null;
   let lastMutationTime = 0;
 
   // ── Session ID ─────────────────────────────────────────────────
@@ -78,6 +73,9 @@
       return "deepseek-default";
     }
     if (IS_GROK) {
+      // grok.com's switcher shows tiers (Auto/Fast/Expert/Heavy), not model
+      // names directly - Expert/Heavy both map to Grok 4.5 per the site's
+      // own mode config, Fast maps to Grok 4.3
       const btn = document.querySelector("#model-select-trigger");
       const txt = btn ? btn.textContent.toLowerCase() : "";
       if (txt.includes("heavy") || txt.includes("expert")) return "grok-4.5";
@@ -164,11 +162,21 @@
   }
 
   function countDeepSeek() {
-    const msgs = document.querySelectorAll('.ds-message');
-    if (msgs.length === 0) return 0;
-    const text = Array.from(msgs).map(el => el.textContent || "").join(" ");
-    const input = document.querySelector('textarea');
-    const inputText = input ? (input.value || "").trim() : "";
+  const msgs = document.querySelectorAll('.ds-message');
+  if (msgs.length === 0) return 0;
+  const text = Array.from(msgs).map(el => el.textContent || "").join(" ");
+  const input = document.querySelector('textarea');
+  const inputText = input ? (input.value || "").trim() : "";
+  const clean = inputText && text.includes(inputText) ? text.replace(inputText, "") : text;
+  return Tokenizer.estimate(clean.trim());
+}
+
+  function countGrok() {
+    const nodes = document.querySelectorAll("[data-testid='user-message'], [data-testid='assistant-message']");
+    if (nodes.length === 0) return 0;
+    const text = Array.from(nodes).map(el => el.textContent || "").join(" ");
+    const inputEl = document.querySelector("[data-testid='chat-input'] [contenteditable='true']");
+    const inputText = inputEl ? (inputEl.textContent || "").trim() : "";
     const clean = inputText && text.includes(inputText) ? text.replace(inputText, "") : text;
     return Tokenizer.estimate(clean.trim());
   }
@@ -304,51 +312,51 @@
   }
 
   function startResponseReadyDetector() {
-    let hadActivity = false;
-    let streamTimer = null;
+  let hadActivity = false;
+  let streamTimer = null;
 
-    console.log("[TokenPulse] Response detector started");
+  console.log("[TokenPulse] Response detector started");
 
-    const obs = new MutationObserver(() => {
-      hadActivity = true;
-      clearTimeout(streamTimer);
-      streamTimer = setTimeout(() => {
-        if (hadActivity) {
-          hadActivity = false;
-          console.log("[TokenPulse] Silence detected, visibility:", document.visibilityState);
-          onResponseReady();
-        }
-      }, 2000);
+  const obs = new MutationObserver(() => {
+    hadActivity = true;
+    clearTimeout(streamTimer);
+    streamTimer = setTimeout(() => {
+      if (hadActivity) {
+        hadActivity = false;
+        console.log("[TokenPulse] Silence detected, visibility:", document.visibilityState);
+        onResponseReady();
+      }
+    }, 2000);
+  });
+
+  obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+
+function onResponseReady() {
+  console.log("[TokenPulse] onResponseReady called, visibility:", document.visibilityState, "tokens:", lastTokenCount);
+  
+  if (document.visibilityState !== "hidden") {
+    console.log("[TokenPulse] Tab visible — skipping notification");
+    return;
+  }
+  if (lastTokenCount < 50) {
+    console.log("[TokenPulse] Too few tokens — skipping");
+    return;
+  }
+
+  const platformName = TT.PLATFORM_LABELS[PLATFORM] || PLATFORM;
+  console.log("[TokenPulse] Sending RESPONSE_READY for", platformName);
+
+  try {
+    chrome.runtime.sendMessage({
+      type: "RESPONSE_READY",
+      platform: PLATFORM,
+      platformName,
     });
-
-    obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+  } catch (e) {
+    console.log("[TokenPulse] sendMessage failed:", e);
   }
-
-  function onResponseReady() {
-    console.log("[TokenPulse] onResponseReady called, visibility:", document.visibilityState, "tokens:", lastTokenCount);
-
-    if (document.visibilityState !== "hidden") {
-      console.log("[TokenPulse] Tab visible — skipping notification");
-      return;
-    }
-    if (lastTokenCount < 50) {
-      console.log("[TokenPulse] Too few tokens — skipping");
-      return;
-    }
-
-    const platformName = IS_CLAUDE ? "Claude" : IS_GEMINI ? "Gemini" : IS_DEEPSEEK ? "DeepSeek" : "ChatGPT";
-    console.log("[TokenPulse] Sending RESPONSE_READY for", platformName);
-
-    try {
-      chrome.runtime.sendMessage({
-        type: "RESPONSE_READY",
-        platform: PLATFORM,
-        platformName,
-      });
-    } catch (e) {
-      console.log("[TokenPulse] sendMessage failed:", e);
-    }
-  }
+}
 
   // ── Bar injection ──────────────────────────────────────────────
   function resolveWrapper() {
@@ -465,19 +473,19 @@
 
   // ── Boot ───────────────────────────────────────────────────────
   function init() {
-    injectBar();
-    startObserver();
-    startResponseReadyDetector();
-    watchSession();
-    setTimeout(scan, 800);
-    setTimeout(scan, 2500);
+  injectBar();
+  startObserver();
+  startResponseReadyDetector();
+  watchSession();
+  setTimeout(scan, 800);
+  setTimeout(scan, 2500);
 
-    if (IS_CLAUDE) {
-      fetchClaudeUsage().then(usage => {
-        if (usage) { try { chrome.runtime.sendMessage({ type: "CLAUDE_USAGE_RESULT", usage }); } catch (_) { } }
-      });
-    }
+  if (IS_CLAUDE) {
+    fetchClaudeUsage().then(usage => {
+      if (usage) { try { chrome.runtime.sendMessage({ type: "CLAUDE_USAGE_RESULT", usage }); } catch (_) { } }
+    });
   }
+}
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
