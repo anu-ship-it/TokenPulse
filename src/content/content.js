@@ -16,8 +16,8 @@
   let lastModel = "default";
   let popupShown = false;
   let rafPending = false;
-  let isStreaming     = false;
-  let streamTimer     = null;
+  let isStreaming = false;
+  let streamTimer = null;
   let lastMutationTime = 0;
 
   // ── Session ID ─────────────────────────────────────────────────
@@ -162,14 +162,14 @@
   }
 
   function countDeepSeek() {
-  const msgs = document.querySelectorAll('.ds-message');
-  if (msgs.length === 0) return 0;
-  const text = Array.from(msgs).map(el => el.textContent || "").join(" ");
-  const input = document.querySelector('textarea');
-  const inputText = input ? (input.value || "").trim() : "";
-  const clean = inputText && text.includes(inputText) ? text.replace(inputText, "") : text;
-  return Tokenizer.estimate(clean.trim());
-}
+    const msgs = document.querySelectorAll('.ds-message');
+    if (msgs.length === 0) return 0;
+    const text = Array.from(msgs).map(el => el.textContent || "").join(" ");
+    const input = document.querySelector('textarea');
+    const inputText = input ? (input.value || "").trim() : "";
+    const clean = inputText && text.includes(inputText) ? text.replace(inputText, "") : text;
+    return Tokenizer.estimate(clean.trim());
+  }
 
   function countGrok() {
     const nodes = document.querySelectorAll("[data-testid='user-message'], [data-testid='assistant-message']");
@@ -312,51 +312,59 @@
   }
 
   function startResponseReadyDetector() {
-  let hadActivity = false;
-  let streamTimer = null;
+    let hadActivity = false;
+    let streamTimer = null;
 
-  console.log("[TokenPulse] Response detector started");
+    console.log("[TokenPulse] Response detector started");
 
-  const obs = new MutationObserver(() => {
-    hadActivity = true;
-    clearTimeout(streamTimer);
-    streamTimer = setTimeout(() => {
-      if (hadActivity) {
-        hadActivity = false;
-        console.log("[TokenPulse] Silence detected, visibility:", document.visibilityState);
-        onResponseReady();
-      }
-    }, 2000);
-  });
-
-  obs.observe(document.body, { childList: true, subtree: true, characterData: true });
-}
-
-function onResponseReady() {
-  console.log("[TokenPulse] onResponseReady called, visibility:", document.visibilityState, "tokens:", lastTokenCount);
-  
-  if (document.visibilityState !== "hidden") {
-    console.log("[TokenPulse] Tab visible — skipping notification");
-    return;
-  }
-  if (lastTokenCount < 50) {
-    console.log("[TokenPulse] Too few tokens — skipping");
-    return;
-  }
-
-  const platformName = TT.PLATFORM_LABELS[PLATFORM] || PLATFORM;
-  console.log("[TokenPulse] Sending RESPONSE_READY for", platformName);
-
-  try {
-    chrome.runtime.sendMessage({
-      type: "RESPONSE_READY",
-      platform: PLATFORM,
-      platformName,
+    const obs = new MutationObserver(() => {
+      hadActivity = true;
+      clearTimeout(streamTimer);
+      streamTimer = setTimeout(() => {
+        if (hadActivity) {
+          hadActivity = false;
+          console.log("[TokenPulse] Silence detected, visibility:", document.visibilityState);
+          onResponseReady();
+        }
+      }, 2000);
     });
-  } catch (e) {
-    console.log("[TokenPulse] sendMessage failed:", e);
+
+    obs.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
-}
+
+  function onResponseReady() {
+    console.log("[TokenPulse] onResponseReady called, visibility:", document.visibilityState, "tokens:", lastTokenCount);
+
+    if (document.visibilityState !== "hidden") {
+      console.log("[TokenPulse] Tab visible — skipping notification");
+      return;
+    }
+    if (lastTokenCount < 50) {
+      console.log("[TokenPulse] Too few tokens — skipping");
+      return;
+    }
+
+    const platformName = TT.PLATFORM_LABELS[PLATFORM] || PLATFORM;
+    console.log("[TokenPulse] Sending RESPONSE_READY for", platformName);
+
+    try {
+      chrome.runtime.sendMessage({
+        type: "RESPONSE_READY",
+        platform: PLATFORM,
+        platformName,
+      });
+    } catch (e) {
+      console.log("[TokenPulse] sendMessage failed:", e);
+    }
+  }
+
+  function syncBarWidth() {
+    const bar = document.getElementById("tt-bar");
+    const anchor = resolveWrapper();
+    if (!bar || !anchor) return;
+    const w = anchor.getBoundingClientRect().width;
+    if (w > 0) bar.style.width = w + "px";
+  }
 
   // ── Bar injection ──────────────────────────────────────────────
   function resolveWrapper() {
@@ -367,6 +375,7 @@ function onResponseReady() {
     return document.querySelector("form:has(#prompt-textarea), form:has(textarea)");
   }
 
+  let widthObserver = null;
   function injectBar() {
     const existing = document.getElementById("tt-bar");
     if (existing && document.contains(existing)) return;
@@ -392,18 +401,14 @@ function onResponseReady() {
 
     inner.append(label, track, count);
     bar.appendChild(inner);
+    if (widthObserver) widthObserver.disconnect();
 
-    const anchor = () => {
-      const w = resolveWrapper();
-      if (w?.parentNode) { w.parentNode.insertBefore(bar, w); return true; }
-      return false;
-    };
-
-    if (!anchor()) {
-      document.body.appendChild(bar);
-      const t = setInterval(() => { if (anchor()) clearInterval(t); }, 800);
-      setTimeout(() => clearInterval(t), 15000);
+    const anchor = resolveWrapper();
+    if (anchor) {
+      widthObserver = new ResizeObserver(syncBarWidth);
+      widthObserver.observe(anchor);
     }
+    syncBarWidth();
   }
 
   // ── Bar update ─────────────────────────────────────────────────
@@ -473,19 +478,19 @@ function onResponseReady() {
 
   // ── Boot ───────────────────────────────────────────────────────
   function init() {
-  injectBar();
-  startObserver();
-  startResponseReadyDetector();
-  watchSession();
-  setTimeout(scan, 800);
-  setTimeout(scan, 2500);
+    injectBar();
+    startObserver();
+    startResponseReadyDetector();
+    watchSession();
+    setTimeout(scan, 800);
+    setTimeout(scan, 2500);
 
-  if (IS_CLAUDE) {
-    fetchClaudeUsage().then(usage => {
-      if (usage) { try { chrome.runtime.sendMessage({ type: "CLAUDE_USAGE_RESULT", usage }); } catch (_) { } }
-    });
+    if (IS_CLAUDE) {
+      fetchClaudeUsage().then(usage => {
+        if (usage) { try { chrome.runtime.sendMessage({ type: "CLAUDE_USAGE_RESULT", usage }); } catch (_) { } }
+      });
+    }
   }
-}
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

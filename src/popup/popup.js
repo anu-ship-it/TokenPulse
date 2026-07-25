@@ -247,22 +247,18 @@ function headerHTML(badgeClass, badgeLabel, heroColor, showBack, activeIcon) {
     </div>`;
 }
 
+function detectPlatform(url) {
+  return Object.entries(TT.PLATFORMS).find(([, p]) => p.hosts.some(h => url.includes(h)))?.[0] || null;
+}
+
 // ── Platform helper ─────────────────────────────────────────────────
 function platformMeta(platform) {
-  const isClaude = platform === "claude";
-  const isGemini = platform === "gemini";
-  const isDeepSeek = platform === "deepseek";
-  return {
-    isClaude, isGemini, isDeepSeek,
-    badgeClass: isClaude ? "badge-claude" : isGemini ? "badge-gemini" : isDeepSeek ? "badge-deepseek" : "badge-chatgpt",
-    badgeLabel: isClaude ? "Claude" : isGemini ? "Gemini" : isDeepSeek ? "DeepSeek" : "ChatGPT",
-    newChatUrl: isClaude ? "https://claude.ai/new" : isGemini ? "https://gemini.google.com/" : isDeepSeek ? "https://chat.deepseek.com/" : "https://chatgpt.com/",
-    defaultLimit: isClaude ? TT.LIMITS["default"] : isGemini ? TT.LIMITS["gemini-default"] : isDeepSeek ? TT.LIMITS["deepseek-default"] : TT.LIMITS["gpt-4o"],
-  };
+  const p = TT.PLATFORMS[platform] || TT.PLATFORMS.chatgpt;
+  return { ...p, defaultLimit: TT.LIMITS[p.defaultLimitKey] };
 }
 
 // ── Main view ──────────────────────────────────────────────────────
-function renderMain(state) {
+function renderMain(state) {  
   const { usage, context, history, platform, model } = state;
   const root = document.getElementById("root");
   const pm = platformMeta(platform);
@@ -514,10 +510,8 @@ async function init() {
   const ok = SUPPORTED.some(s => url.includes(s));
   if (!ok) { renderEmpty(); return; }
 
-  const platform = url.includes("claude.ai") ? "claude"
-    : url.includes("gemini.google.com") ? "gemini"
-      : url.includes("deepseek.com") ? "deepseek"
-        : "chatgpt";
+  const platform = detectPlatform(url);
+  if (!platform) { renderEmpty(); return; }
 
   const data = await chrome.runtime.sendMessage({ type: "GET_ALL_DATA" });
 

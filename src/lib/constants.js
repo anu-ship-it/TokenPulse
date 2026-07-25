@@ -9,6 +9,13 @@ const TT = {
     gemini:   "Gemini",
     deepseek: "DeepSeek",
   },
+  PLATFORMS: {
+  claude:   { hosts: ["claude.ai"], label: "Claude", badgeClass: "badge-claude", newChatUrl: "https://claude.ai/new", defaultLimitKey: "default" },
+  chatgpt:  { hosts: ["chatgpt.com","openai.com"], label: "ChatGPT", badgeClass: "badge-chatgpt", newChatUrl: "https://chatgpt.com/", defaultLimitKey: "gpt-4o" },
+  gemini:   { hosts: ["gemini.google.com"], label: "Gemini", badgeClass: "badge-gemini", newChatUrl: "https://gemini.google.com/", defaultLimitKey: "gemini-default" },
+  deepseek: { hosts: ["chat.deepseek.com"], label: "DeepSeek", badgeClass: "badge-deepseek", newChatUrl: "https://chat.deepseek.com/", defaultLimitKey: "deepseek-default" },
+  grok:     { hosts: ["grok.com"], label: "Grok", badgeClass: "badge-grok", newChatUrl: "https://grok.com/", defaultLimitKey: "grok-default" },
+},
   LIMITS: {
     "default":          200000,
 

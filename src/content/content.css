@@ -1,7 +1,7 @@
 #tt-bar {
   all: initial;
   display: block;
-  width: 100%;
+  width: auto;
   box-sizing: border-box;
   padding: 5px 12px 3px;
   font-family: 'SF Mono', 'Fira Code', monospace;
