@@ -1,8 +1,3 @@
-/**
- * content.js v2.3.0
- * Added: Grok support, JS-based bar width sync (replaces CSS width:100%)
- */
-
 (() => {
   "use strict";
 

@@ -3,12 +3,6 @@ const TT = {
     ORGS: "https://claude.ai/api/organizations",
     USAGE: (id) => `https://claude.ai/api/organizations/${id}/usage`,
   },
-
-  // Single source of truth for everything platform-specific.
-  // content.js, service-worker.js, and popup.js all read from this —
-  // adding a new platform means editing ONLY this block plus LIMITS/
-  // COST_PER_M/MODEL_LABELS/TIPS below. Nothing else should ever
-  // hardcode a platform name again.
   PLATFORMS: {
     claude: {
       hosts: ["claude.ai"],
