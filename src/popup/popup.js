@@ -1,6 +1,5 @@
 "use strict";
 
-const SUPPORTED = ["chatgpt.com", "openai.com", "claude.ai", "gemini.google.com", "chat.deepseek.com"];
 const STORE_REVIEW_URL = "https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic/reviews";
 const FORMSPREE_URL = "https://formspree.io/f/xqeoqzdg";
 const WEBSITE_URL = "https://token-pulse.in";
@@ -69,11 +68,12 @@ function fmtCost(usd) {
 
 const MODEL_LABELS = {
   "claude-sonnet-4": "Sonnet 4", "claude-opus-4": "Opus 4", "claude-haiku-4": "Haiku 4",
-  "gpt-4o": "GPT-4o", "gpt-4": "GPT-4", "gpt-3.5": "GPT-3.5", "o1": "o1", "o3": "o3",
+  "gpt-4o": "GPT-4o", "gpt-3.5": "GPT-3.5", "o1": "o1", "o3": "o3",
   "default": "Default",
   "gemini-default": "Gemini", "gemini-1.5-pro": "Gemini 1.5 Pro",
   "gemini-1.5-flash": "Gemini 1.5 Flash", "gemini-2.0-flash": "Gemini 2.0 Flash",
   "deepseek-v3": "DeepSeek V3", "deepseek-r1": "DeepSeek R1", "deepseek-default": "DeepSeek",
+  "grok-4.5": "Grok 4.5", "grok-4.3": "Grok 4.3", "grok-default": "Grok",
 };
 
 function bindHeaderButtons(state) {
@@ -119,6 +119,11 @@ const TIPS = {
     { title: "Use R1 for reasoning, V3 for speed", body: "R1's chain-of-thought uses more tokens. Switch to V3 for simple tasks that don't need deep reasoning.", prompt: null },
     { title: "Start new chats for unrelated tasks", body: "DeepSeek's context window is smaller than Gemini's. Keep conversations focused to avoid hitting the wall.", prompt: null },
     { title: "Ask for concise output", body: "DeepSeek can be verbose by default. Ask explicitly for brevity to save tokens.", prompt: "Keep your answer concise. No need to over-explain." },
+  ],
+  grok: [
+    { title: "Fast is enough for most messages", body: "Fast mode (Grok 4.3) handles everyday questions well and burns far fewer tokens than Expert or Heavy. Switch up only when a task actually needs deeper reasoning.", prompt: null },
+    { title: "Heavy runs multiple experts in parallel", body: "Heavy mode multiplies token usage by running several reasoning passes on the same prompt. Reserve it for problems Fast/Expert genuinely can't solve.", prompt: null },
+    { title: "Context limits vary by tier", body: "Fast's context window is roughly double Expert/Heavy's. If you're pasting large documents, check which mode you're in before you start.", prompt: null },
   ],
 };
 
@@ -247,18 +252,32 @@ function headerHTML(badgeClass, badgeLabel, heroColor, showBack, activeIcon) {
     </div>`;
 }
 
+// ── Platform helper ─────────────────────────────────────────────────
+// Single source of truth is TT.PLATFORMS (constants.js). Nothing here
+// hardcodes a platform name — add a platform there and this file needs
+// zero changes beyond MODEL_LABELS and TIPS above.
 function detectPlatform(url) {
-  return Object.entries(TT.PLATFORMS).find(([, p]) => p.hosts.some(h => url.includes(h)))?.[0] || null;
+  const entry = Object.entries(TT.PLATFORMS).find(
+    ([, p]) => p.hosts.some(h => url.includes(h))
+  );
+  return entry ? entry[0] : null;
 }
 
-// ── Platform helper ─────────────────────────────────────────────────
-function platformMeta(platform) {
-  const p = TT.PLATFORMS[platform] || TT.PLATFORMS.chatgpt;
-  return { ...p, defaultLimit: TT.LIMITS[p.defaultLimitKey] };
+function platformMeta(platformKey) {
+  const p = TT.PLATFORMS[platformKey] || TT.PLATFORMS.chatgpt;
+  return {
+    key: platformKey,
+    badgeClass: p.badgeClass,
+    badgeLabel: p.label,
+    newChatUrl: p.newChatUrl,
+    defaultLimit: TT.LIMITS[p.defaultLimitKey],
+    defaultModel: p.defaultModelKey,
+    hasRateLimits: !!p.hasRateLimits,
+  };
 }
 
 // ── Main view ──────────────────────────────────────────────────────
-function renderMain(state) {  
+function renderMain(state) {
   const { usage, context, history, platform, model } = state;
   const root = document.getElementById("root");
   const pm = platformMeta(platform);
@@ -267,10 +286,10 @@ function renderMain(state) {
   const limit = ctx.limit || pm.defaultLimit;
   const ctxPct = safePct(used, limit);
   const ctxColor = colorFor(ctxPct);
-  const activeModel = model || (pm.isClaude ? "claude-sonnet-4" : "gpt-4o");
+  const activeModel = model || pm.defaultModel;
 
   let heroPct = ctxPct;
-  if (pm.isClaude && usage) {
+  if (pm.hasRateLimits && usage) {
     heroPct = Math.max(ctxPct, usage.five_hour?.utilization || 0, usage.seven_day?.utilization || 0);
   }
   const heroColor = colorFor(heroPct);
@@ -302,7 +321,7 @@ function renderMain(state) {
     </div>
 
     ${costHTML(used, activeModel, history || [], platform)}
-    ${pm.isClaude && usage ? rateLimitsHTML(usage) : ""}
+    ${pm.hasRateLimits && usage ? rateLimitsHTML(usage) : ""}
     ${dailyHistoryHTML(history || [], platform)}
 
     <div class="footer">
@@ -330,7 +349,7 @@ function renderMain(state) {
   document.getElementById("main-website-btn").addEventListener("click", () => {
     chrome.tabs.create({ url: WEBSITE_URL });
     window.close();
-});
+  });
   document.getElementById("main-support-btn").addEventListener("click", () => {
     chrome.tabs.create({ url: "https://anu-ship-it.github.io/TokenPulse/support.html" });
     window.close();
@@ -363,7 +382,7 @@ function renderTips(state) {
         </div>`).join("")}
     </div>
     <div class="footer">
-      <span class="footer-note">v2.2.0</span>
+      <span class="footer-note">v2.3.0</span>
       <button class="new-chat" id="more-tips-btn">Refresh tips</button>
     </div>
   `;
@@ -400,7 +419,6 @@ function renderSettings(state) {
           ${toggleRow("n90", "Alert at 90%", "Critical warning", s.notify_90)}
           ${toggleRow("n100", "Alert at 100%", "Limit reached", s.notify_100)}
           ${toggleRow("n_response", "Response ready", "Notify when generation finishes", s.notify_response_ready)}
-          ${toggleRow("n100", "Alert at 100%", "Limit reached", s.notify_100)}
         </div>
       </div>
 
@@ -420,9 +438,9 @@ function renderSettings(state) {
               <div class="data-sub">Background refresh frequency</div>
             </div>
             <select id="refresh" class="sel">
-              <option value="1"  ${s.refresh_minutes === 1  ? "selected" : ""}>1 min</option>
-              <option value="2"  ${s.refresh_minutes === 2  ? "selected" : ""}>2 min</option>
-              <option value="5"  ${s.refresh_minutes === 5  ? "selected" : ""}>5 min</option>
+              <option value="1"  ${s.refresh_minutes === 1 ? "selected" : ""}>1 min</option>
+              <option value="2"  ${s.refresh_minutes === 2 ? "selected" : ""}>2 min</option>
+              <option value="5"  ${s.refresh_minutes === 5 ? "selected" : ""}>5 min</option>
               <option value="10" ${s.refresh_minutes === 10 ? "selected" : ""}>10 min</option>
               <option value="15" ${s.refresh_minutes === 15 ? "selected" : ""}>15 min</option>
             </select>
@@ -437,7 +455,7 @@ function renderSettings(state) {
 
       <div style="padding:0 14px 16px;border-top:1px solid #1a1a1a;margin-top:4px">
         <div style="padding-top:12px">
-          <div style="font-size:12px;font-weight:600;color:#4a9ba5">TokenPulse <span style="color:#3a3a3a;font-weight:400">v2.2.0</span></div>
+          <div style="font-size:12px;font-weight:600;color:#4a9ba5">TokenPulse <span style="color:#3a3a3a;font-weight:400">v2.3.0</span></div>
           <div style="font-size:10px;color:#3a3a3a;margin-top:2px">Built by Anoop Kumar and Mansi Rathore · Alpha</div>
         </div>
       </div>
@@ -447,13 +465,13 @@ function renderSettings(state) {
 
     document.getElementById("save-btn").addEventListener("click", async () => {
       const settings = {
-        notify_50:             document.getElementById("n50").checked,
-        notify_75:             document.getElementById("n75").checked,
-        notify_90:             document.getElementById("n90").checked,
-        notify_100:            document.getElementById("n100").checked,
+        notify_50: document.getElementById("n50").checked,
+        notify_75: document.getElementById("n75").checked,
+        notify_90: document.getElementById("n90").checked,
+        notify_100: document.getElementById("n100").checked,
         notify_response_ready: document.getElementById("n_response").checked,
-        show_bar:              document.getElementById("show_bar").checked,
-        refresh_minutes:       parseInt(document.getElementById("refresh").value, 10),
+        show_bar: document.getElementById("show_bar").checked,
+        refresh_minutes: parseInt(document.getElementById("refresh").value, 10),
       };
       await chrome.runtime.sendMessage({ type: "SAVE_SETTINGS", settings });
       const msg = document.getElementById("saved-msg");
@@ -479,6 +497,12 @@ function toggleRow(id, label, desc, checked) {
 
 // ── Empty state ────────────────────────────────────────────────────
 function renderEmpty() {
+  const labels = Object.values(TT.PLATFORMS).map(p => p.label);
+  const last = labels.pop();
+  const text = labels.length
+    ? labels.map(l => `<strong>${l}</strong>`).join(", ") + `, or <strong>${last}</strong>`
+    : `<strong>${last}</strong>`;
+
   document.getElementById("root").innerHTML = `
     <div class="hd">
       <div class="hd-left">
@@ -497,9 +521,9 @@ function renderEmpty() {
     </div>
     <div class="empty">
       <div class="empty-icon">◎</div>
-      <p class="empty-text">Open <strong>ChatGPT</strong>, <strong>Claude</strong>, <strong>Gemini</strong>, or <strong>DeepSeek</strong> and start chatting</p>
+      <p class="empty-text">Open ${text} and start chatting</p>
     </div>
-    <div class="footer"><span class="footer-note">v2.2.0</span></div>
+    <div class="footer"><span class="footer-note">v2.3.0</span></div>
   `;
 }
 
@@ -507,8 +531,6 @@ function renderEmpty() {
 async function init() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const url = tab?.url || "";
-  const ok = SUPPORTED.some(s => url.includes(s));
-  if (!ok) { renderEmpty(); return; }
 
   const platform = detectPlatform(url);
   if (!platform) { renderEmpty(); return; }
@@ -526,11 +548,11 @@ async function init() {
   } catch (_) { }
 
   renderMain({
-    usage:    data.usage,
-    context:  data.context || {},
-    history:  data.history || [],
+    usage: data.usage,
+    context: data.context || {},
+    history: data.history || [],
     platform,
-    model:    liveModel,
+    model: liveModel,
   });
 }
 

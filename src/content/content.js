@@ -1,3 +1,8 @@
+/**
+ * content.js v2.3.0
+ * Added: Grok support, JS-based bar width sync (replaces CSS width:100%)
+ */
+
 (() => {
   "use strict";
 
@@ -16,9 +21,7 @@
   let lastModel = "default";
   let popupShown = false;
   let rafPending = false;
-  let isStreaming = false;
-  let streamTimer = null;
-  let lastMutationTime = 0;
+  let widthObserver = null;
 
   // ── Session ID ─────────────────────────────────────────────────
   function getSessionId() {
@@ -34,7 +37,6 @@
       const m = location.pathname.match(/\/c\/([a-z0-9-]+)/i);
       return m ? m[1] : "home";
     }
-    // Gemini uses URL hash or path
     return location.pathname + location.search;
   }
 
@@ -51,7 +53,6 @@
       return "claude-sonnet-4";
     }
     if (IS_GEMINI) {
-      // Gemini model switcher
       const btn = document.querySelector("bard-mode-switcher, .model-switcher, [aria-label*='Gemini']");
       if (btn) {
         const txt = btn.textContent.toLowerCase();
@@ -73,9 +74,8 @@
       return "deepseek-default";
     }
     if (IS_GROK) {
-      // grok.com's switcher shows tiers (Auto/Fast/Expert/Heavy), not model
-      // names directly - Expert/Heavy both map to Grok 4.5 per the site's
-      // own mode config, Fast maps to Grok 4.3
+      // grok.com's switcher shows tiers (Auto/Fast/Expert/Heavy), not raw
+      // model names — Expert/Heavy both map to Grok 4.5, Fast maps to 4.3
       const btn = document.querySelector("#model-select-trigger");
       const txt = btn ? btn.textContent.toLowerCase() : "";
       if (txt.includes("heavy") || txt.includes("expert")) return "grok-4.5";
@@ -90,12 +90,6 @@
     if (txt.includes("4o")) return "gpt-4o";
     if (txt.includes("3.5")) return "gpt-3.5";
     return "gpt-4o";
-  }
-
-  // ── Context limit ──────────────────────────────────────────────
-  function getLimit() {
-    const model = getModel();
-    return TT.LIMITS[model] || TT.LIMITS["default"];
   }
 
   // ── Cost estimation ────────────────────────────────────────────
@@ -129,35 +123,21 @@
   }
 
   function countGemini() {
-    // Collect all user queries and model responses
     const userEls = document.getElementsByTagName("user-query");
     const modelEls = document.getElementsByTagName("model-response");
-
     if (userEls.length === 0 && modelEls.length === 0) return 0;
 
     let totalText = "";
-
-    // Add all user messages
-    Array.from(userEls).forEach(el => {
-      totalText += (el.textContent || "").trim() + " ";
-    });
-
-    // Add all model responses — use message-content for cleaner text
+    Array.from(userEls).forEach(el => { totalText += (el.textContent || "").trim() + " "; });
     Array.from(modelEls).forEach(el => {
       const msgContent = el.querySelector("message-content");
-      const text = msgContent
-        ? (msgContent.textContent || "").trim()
-        : (el.textContent || "").trim();
+      const text = msgContent ? (msgContent.textContent || "").trim() : (el.textContent || "").trim();
       totalText += text + " ";
     });
 
-    // Subtract input box text to avoid double counting
     const inputEl = document.querySelector("rich-textarea");
     const inputText = inputEl ? (inputEl.textContent || "").trim() : "";
-    if (inputText && totalText.includes(inputText)) {
-      totalText = totalText.replace(inputText, "");
-    }
-
+    if (inputText && totalText.includes(inputText)) totalText = totalText.replace(inputText, "");
     return Tokenizer.estimate(totalText.trim());
   }
 
@@ -191,9 +171,7 @@
       try {
         const nodes = document.querySelectorAll(sel);
         if (nodes.length > 0) {
-          return Tokenizer.estimateMessages(
-            Array.from(nodes).map(n => n.textContent || "")
-          );
+          return Tokenizer.estimateMessages(Array.from(nodes).map(n => n.textContent || ""));
         }
       } catch (_) { }
     }
@@ -266,7 +244,6 @@
     lastTokenCount = tokens;
     lastModel = model;
 
-    // Get stored rate limit data to show whichever is worse
     if (IS_CLAUDE) {
       chrome.storage.local.get([TT.KEY.USAGE], (r) => {
         const usage = r[TT.KEY.USAGE];
@@ -274,11 +251,9 @@
         const weeklyPct = usage?.seven_day?.utilization || 0;
         const ratePct = Math.max(sessionPct, weeklyPct);
         const ctxPct = Math.round((tokens / limit) * 100);
-        const worstPct = Math.max(ctxPct, ratePct);
 
-        // If rate limit is the bottleneck, show it against a virtual 100-unit scale
         if (ratePct > ctxPct) {
-          updateBar(ratePct, 100, true); // true = rateLimit mode
+          updateBar(ratePct, 100, true);
         } else {
           updateBar(tokens, limit, false);
         }
@@ -315,15 +290,12 @@
     let hadActivity = false;
     let streamTimer = null;
 
-    console.log("[TokenPulse] Response detector started");
-
     const obs = new MutationObserver(() => {
       hadActivity = true;
       clearTimeout(streamTimer);
       streamTimer = setTimeout(() => {
         if (hadActivity) {
           hadActivity = false;
-          console.log("[TokenPulse] Silence detected, visibility:", document.visibilityState);
           onResponseReady();
         }
       }, 2000);
@@ -333,19 +305,10 @@
   }
 
   function onResponseReady() {
-    console.log("[TokenPulse] onResponseReady called, visibility:", document.visibilityState, "tokens:", lastTokenCount);
+    if (document.visibilityState !== "hidden") return;
+    if (lastTokenCount < 50) return;
 
-    if (document.visibilityState !== "hidden") {
-      console.log("[TokenPulse] Tab visible — skipping notification");
-      return;
-    }
-    if (lastTokenCount < 50) {
-      console.log("[TokenPulse] Too few tokens — skipping");
-      return;
-    }
-
-    const platformName = TT.PLATFORM_LABELS[PLATFORM] || PLATFORM;
-    console.log("[TokenPulse] Sending RESPONSE_READY for", platformName);
+    const platformName = TT.PLATFORMS[PLATFORM]?.label || PLATFORM;
 
     try {
       chrome.runtime.sendMessage({
@@ -353,17 +316,7 @@
         platform: PLATFORM,
         platformName,
       });
-    } catch (e) {
-      console.log("[TokenPulse] sendMessage failed:", e);
-    }
-  }
-
-  function syncBarWidth() {
-    const bar = document.getElementById("tt-bar");
-    const anchor = resolveWrapper();
-    if (!bar || !anchor) return;
-    const w = anchor.getBoundingClientRect().width;
-    if (w > 0) bar.style.width = w + "px";
+    } catch (_) { }
   }
 
   // ── Bar injection ──────────────────────────────────────────────
@@ -375,10 +328,23 @@
     return document.querySelector("form:has(#prompt-textarea), form:has(textarea)");
   }
 
-  let widthObserver = null;
+  // Matches #tt-bar's rendered width to the anchor element's actual
+  // rendered width via JS, instead of relying on CSS width:100% —
+  // that assumption ("parent width == anchor width") holds by
+  // coincidence on some platforms and breaks on others (e.g. Grok,
+  // where .query-bar self-constrains its own width rather than being
+  // constrained by its parent). This is correct for any DOM structure.
+  function syncBarWidth() {
+    const bar = document.getElementById("tt-bar");
+    const anchor = resolveWrapper();
+    if (!bar || !anchor) return;
+    const w = anchor.getBoundingClientRect().width;
+    if (w > 0) bar.style.width = w + "px";
+  }
+
   function injectBar() {
     const existing = document.getElementById("tt-bar");
-    if (existing && document.contains(existing)) return;
+    if (existing && document.contains(existing)) { syncBarWidth(); return; }
     if (existing) existing.remove();
 
     const bar = document.createElement("div");
@@ -401,13 +367,28 @@
 
     inner.append(label, track, count);
     bar.appendChild(inner);
-    if (widthObserver) widthObserver.disconnect();
 
-    const anchor = resolveWrapper();
-    if (anchor) {
-      widthObserver = new ResizeObserver(syncBarWidth);
-      widthObserver.observe(anchor);
+    const anchor = () => {
+      const w = resolveWrapper();
+      if (w?.parentNode) { w.parentNode.insertBefore(bar, w); return true; }
+      return false;
+    };
+
+    if (!anchor()) {
+      document.body.appendChild(bar);
+      const t = setInterval(() => { if (anchor()) { clearInterval(t); attachWidthObserver(); } }, 800);
+      setTimeout(() => clearInterval(t), 15000);
+    } else {
+      attachWidthObserver();
     }
+  }
+
+  function attachWidthObserver() {
+    if (widthObserver) widthObserver.disconnect();
+    const anchor = resolveWrapper();
+    if (!anchor) return;
+    widthObserver = new ResizeObserver(syncBarWidth);
+    widthObserver.observe(anchor);
     syncBarWidth();
   }
 
