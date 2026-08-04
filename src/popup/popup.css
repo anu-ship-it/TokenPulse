@@ -291,6 +291,45 @@ button {
   overflow: hidden;
 }
 
+/* ── Insights view ────────────────────────────── */
+.insight-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 14px 10px;
+}
+
+.insight-card {
+  background: #0d0d0d;
+  border: 1px solid #161616;
+  border-radius: 10px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.insight-icon {
+  font-size: 16px;
+  opacity: .85;
+}
+
+.insight-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #e8e8e8;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.insight-label {
+  font-size: 10px;
+  color: #696868;
+}
+
 .mini-fill {
   height: 100%;
   border-radius: 2px;

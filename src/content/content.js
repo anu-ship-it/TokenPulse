@@ -1,3 +1,8 @@
+/**
+ * content.js v2.3.0
+ * Added: Grok support, JS-based bar width sync (replaces CSS width:100%)
+ */
+
 (() => {
   "use strict";
 
@@ -174,20 +179,49 @@
   }
 
   // ── Auto-save daily usage ──────────────────────────────────────
+  // sessionsSeenToday tracks which session IDs have already been counted
+  // for today's record, so the insights view can show "conversations
+  // today/this week" without re-scraping anything — it's purely a count
+  // of distinct sessions, reusing the session-change detection the URL
+  // watcher already does for lastSessionId.
+  let sessionsSeenToday = new Set();
+  let sessionsSeenDate = new Date().toDateString();
+
   function saveDailyUsage(tokens, limit, model) {
     if (tokens < 50) return;
     const today = new Date().toDateString();
     const key = TT.KEY.HISTORY;
+
+    if (today !== sessionsSeenDate) {
+      sessionsSeenDate = today;
+      sessionsSeenToday = new Set();
+    }
+    const isNewSessionToday = !sessionsSeenToday.has(lastSessionId);
+    if (isNewSessionToday) sessionsSeenToday.add(lastSessionId);
 
     chrome.storage.local.get([key], (r) => {
       const history = r[key] || [];
       const recKey = PLATFORM + "_" + today;
       const idx = history.findIndex(x => x.key === recKey);
       const existing = idx >= 0 ? history[idx] : null;
+
+      // Existing early-return only guarded the peak-token update; session
+      // count must still increment even when tokens haven't grown, so it's
+      // handled before the early return rather than folded into the same
+      // condition.
+      if (existing && isNewSessionToday) {
+        existing.sessions = (existing.sessions || 1) + 1;
+        history[idx] = existing;
+        chrome.storage.local.set({ [key]: history.slice(-60) });
+      }
       if (existing && existing.used >= tokens) return;
 
       const cost = estimateCost(tokens, model);
-      const rec = { key: recKey, platform: PLATFORM, model, used: tokens, limit, cost, ts: Date.now(), date: today };
+      const rec = {
+        key: recKey, platform: PLATFORM, model, used: tokens, limit, cost,
+        ts: Date.now(), date: today,
+        sessions: existing ? (existing.sessions || 1) : 1,
+      };
 
       if (idx >= 0) history[idx] = rec; else history.push(rec);
       chrome.storage.local.set({ [key]: history.slice(-60) });

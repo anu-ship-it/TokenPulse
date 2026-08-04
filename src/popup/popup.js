@@ -77,11 +77,13 @@ const MODEL_LABELS = {
 };
 
 function bindHeaderButtons(state) {
+  const insightsBtn = document.getElementById("insights-btn");
   const tipsBtn = document.getElementById("tips-btn");
   const refreshBtn = document.getElementById("refresh-btn");
   const settingsBtn = document.getElementById("settings-btn");
   const backBtn = document.getElementById("back-btn");
 
+  if (insightsBtn) insightsBtn.addEventListener("click", () => renderInsights(state));
   if (tipsBtn) tipsBtn.addEventListener("click", () => renderTips(state));
   if (refreshBtn) refreshBtn.addEventListener("click", () => {
     refreshBtn.classList.add("spin");
@@ -245,6 +247,7 @@ function headerHTML(badgeClass, badgeLabel, heroColor, showBack, activeIcon) {
       <div class="hd-right">
         <div class="dot" style="background:${heroColor};box-shadow:0 0 6px ${heroColor}66"></div>
         <span class="badge ${badgeClass}">${badgeLabel}</span>
+        <button class="icon-btn ${activeIcon === 'insights' ? 'icon-btn-active' : ''}" id="insights-btn" title="Insights">📊</button>
         <button class="icon-btn ${activeIcon === 'tips' ? 'icon-btn-active' : ''}" id="tips-btn" title="Token tips">💡</button>
         <button class="icon-btn ${activeIcon === 'refresh' ? 'icon-btn-active' : ''}" id="refresh-btn" title="Refresh">↻</button>
         <button class="icon-btn ${activeIcon === 'settings' ? 'icon-btn-active' : ''}" id="settings-btn" title="Settings">⚙</button>
@@ -349,7 +352,7 @@ function renderMain(state) {
   document.getElementById("main-website-btn").addEventListener("click", () => {
     chrome.tabs.create({ url: WEBSITE_URL });
     window.close();
-  });
+});
   document.getElementById("main-support-btn").addEventListener("click", () => {
     chrome.tabs.create({ url: "https://anu-ship-it.github.io/TokenPulse/support.html" });
     window.close();
@@ -400,6 +403,76 @@ function renderTips(state) {
   });
 }
 
+// ── Insights view ──────────────────────────────────────────────────
+// Plain-language framing for a general audience, distinct from the
+// daily-history section on the main view (which stays token/cost-based
+// for users who want that detail). Built entirely from TT.KEY.HISTORY —
+// no new scraping, no new storage.
+function insightsForWeek(history) {
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const weekRecs = (history || []).filter(h => h.ts >= weekAgo);
+
+  const byPlatform = {};
+  let totalCost = 0;
+  let totalSessions = 0;
+  const activeDates = new Set();
+
+  weekRecs.forEach(r => {
+    byPlatform[r.platform] = (byPlatform[r.platform] || 0) + (r.used || 0);
+    totalCost += r.cost || 0;
+    totalSessions += r.sessions || 1;
+    activeDates.add(r.date);
+  });
+
+  const topPlatform = Object.entries(byPlatform).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+  return {
+    hasData: weekRecs.length > 0,
+    topPlatform,
+    topPlatformLabel: topPlatform ? (TT.PLATFORMS[topPlatform]?.label || topPlatform) : null,
+    daysActive: activeDates.size,
+    totalCost,
+    totalSessions,
+  };
+}
+
+function insightCard(icon, value, label) {
+  return `
+    <div class="insight-card">
+      <div class="insight-icon">${icon}</div>
+      <div class="insight-value">${value}</div>
+      <div class="insight-label">${label}</div>
+    </div>`;
+}
+
+function renderInsights(state) {
+  const root = document.getElementById("root");
+  const pm = platformMeta(state.platform);
+  const stats = insightsForWeek(state.history);
+
+  const body = !stats.hasData
+    ? `<div class="no-history" style="padding:24px 14px">No activity yet this week.<br>Come back after a few conversations.</div>`
+    : `
+      <div class="insight-grid">
+        ${stats.topPlatformLabel ? insightCard("⭐", stats.topPlatformLabel, "Most used this week") : ""}
+        ${insightCard("📅", stats.daysActive, stats.daysActive === 1 ? "Day active" : "Days active")}
+        ${insightCard("💬", stats.totalSessions, stats.totalSessions === 1 ? "Conversation" : "Conversations")}
+        ${insightCard("💰", fmtCost(stats.totalCost), "Estimated cost")}
+      </div>
+      <div style="font-size:10px;color:#3a3a3a;padding:0 14px 4px">Last 7 days, across all platforms</div>`;
+
+  root.innerHTML = `
+    ${headerHTML(pm.badgeClass, pm.badgeLabel, TT.COLOR.GREEN, true, "insights")}
+    <div class="section" style="padding-bottom:8px">
+      <div class="section-title">This Week</div>
+    </div>
+    ${body}
+    <div class="footer"><span class="footer-note">v2.3.0</span></div>
+  `;
+
+  bindHeaderButtons(state);
+}
+
 // ── Settings view ────────────────────────────────────────────────
 function renderSettings(state) {
   const root = document.getElementById("root");
@@ -438,9 +511,9 @@ function renderSettings(state) {
               <div class="data-sub">Background refresh frequency</div>
             </div>
             <select id="refresh" class="sel">
-              <option value="1"  ${s.refresh_minutes === 1 ? "selected" : ""}>1 min</option>
-              <option value="2"  ${s.refresh_minutes === 2 ? "selected" : ""}>2 min</option>
-              <option value="5"  ${s.refresh_minutes === 5 ? "selected" : ""}>5 min</option>
+              <option value="1"  ${s.refresh_minutes === 1  ? "selected" : ""}>1 min</option>
+              <option value="2"  ${s.refresh_minutes === 2  ? "selected" : ""}>2 min</option>
+              <option value="5"  ${s.refresh_minutes === 5  ? "selected" : ""}>5 min</option>
               <option value="10" ${s.refresh_minutes === 10 ? "selected" : ""}>10 min</option>
               <option value="15" ${s.refresh_minutes === 15 ? "selected" : ""}>15 min</option>
             </select>
@@ -465,13 +538,13 @@ function renderSettings(state) {
 
     document.getElementById("save-btn").addEventListener("click", async () => {
       const settings = {
-        notify_50: document.getElementById("n50").checked,
-        notify_75: document.getElementById("n75").checked,
-        notify_90: document.getElementById("n90").checked,
-        notify_100: document.getElementById("n100").checked,
+        notify_50:             document.getElementById("n50").checked,
+        notify_75:             document.getElementById("n75").checked,
+        notify_90:             document.getElementById("n90").checked,
+        notify_100:            document.getElementById("n100").checked,
         notify_response_ready: document.getElementById("n_response").checked,
-        show_bar: document.getElementById("show_bar").checked,
-        refresh_minutes: parseInt(document.getElementById("refresh").value, 10),
+        show_bar:              document.getElementById("show_bar").checked,
+        refresh_minutes:       parseInt(document.getElementById("refresh").value, 10),
       };
       await chrome.runtime.sendMessage({ type: "SAVE_SETTINGS", settings });
       const msg = document.getElementById("saved-msg");
@@ -548,11 +621,11 @@ async function init() {
   } catch (_) { }
 
   renderMain({
-    usage: data.usage,
-    context: data.context || {},
-    history: data.history || [],
+    usage:    data.usage,
+    context:  data.context || {},
+    history:  data.history || [],
     platform,
-    model: liveModel,
+    model:    liveModel,
   });
 }
 
