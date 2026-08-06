@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('lbtn-chatgpt')?.addEventListener('click',   () => open_('https://chatgpt.com'));
   document.getElementById('lbtn-gemini')?.addEventListener('click',    () => open_('https://gemini.google.com'));
   document.getElementById('lbtn-deepseek')?.addEventListener('click',  () => open_('https://chat.deepseek.com'));
+  document.getElementById('lbtn-grok')?.addEventListener('click',      () => open_('https://www.grok.com'));
 
   render();
 });

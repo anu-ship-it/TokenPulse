@@ -82,46 +82,56 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return false; // channel can close immediately
   }
 
-  // All remaining cases send a response — return true to keep channel open
+  // All remaining cases send a response — return true to keep channel open.
+  // Wrapped in try/catch so sendResponse is GUARANTEED to fire even if a
+  // Storage call or anything else inside throws — return true is an
+  // unconditional promise to Chrome that a response is coming, and an
+  // uncaught throw here was breaking that promise, leaving the channel
+  // open until the popup closed (which is when Chrome reports "channel
+  // closed before response received").
   (async () => {
-    switch (msg.type) {
+    try {
+      switch (msg.type) {
 
-      case "CONTEXT_UPDATE": {
-        await Storage.saveContext(msg.platform, { used: msg.used, limit: msg.limit });
-        await checkContextNotifications(msg.platform, msg.used, msg.limit);
-        sendResponse({ ok: true });
-        break;
-      }
+        case "CONTEXT_UPDATE": {
+          await Storage.saveContext(msg.platform, { used: msg.used, limit: msg.limit });
+          await checkContextNotifications(msg.platform, msg.used, msg.limit);
+          sendResponse({ ok: true });
+          break;
+        }
 
-      case "GET_ALL_DATA": {
-        const [usage, context, history, settings] = await Promise.all([
-          Storage.getUsage(),
-          Storage.getContext(),
-          Storage.getHistory(),
-          Storage.getSettings(),
-        ]);
-        sendResponse({ usage, context, history, settings });
-        break;
-      }
+        case "GET_ALL_DATA": {
+          const [usage, context, history, settings] = await Promise.all([
+            Storage.getUsage(),
+            Storage.getContext(),
+            Storage.getHistory(),
+            Storage.getSettings(),
+          ]);
+          sendResponse({ usage, context, history, settings });
+          break;
+        }
 
-      case "SAVE_SETTINGS": {
-        await Storage.saveSettings(msg.settings);
-        await setupAlarm();
-        sendResponse({ ok: true });
-        break;
-      }
+        case "SAVE_SETTINGS": {
+          await Storage.saveSettings(msg.settings);
+          await setupAlarm();
+          sendResponse({ ok: true });
+          break;
+        }
 
-      case "FORCE_REFRESH": {
-        triggerUsageFetch();
-        sendResponse({ ok: true });
-        break;
-      }
+        case "FORCE_REFRESH": {
+          triggerUsageFetch();
+          sendResponse({ ok: true });
+          break;
+        }
 
-      default: {
-        // Unknown message type — respond so the channel closes cleanly
-        sendResponse({ ok: false, error: "unknown message type" });
-        break;
+        default: {
+          // Unknown message type — respond so the channel closes cleanly
+          sendResponse({ ok: false, error: "unknown message type" });
+          break;
+        }
       }
+    } catch (err) {
+      sendResponse({ ok: false, error: String(err?.message || err) });
     }
   })();
 
