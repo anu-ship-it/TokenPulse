@@ -274,19 +274,33 @@
     lastModel = model;
 
     if (IS_CLAUDE) {
-      chrome.storage.local.get([TT.KEY.USAGE], (r) => {
-        const usage = r[TT.KEY.USAGE];
-        const sessionPct = usage?.five_hour?.utilization || 0;
-        const weeklyPct = usage?.seven_day?.utilization || 0;
-        const ratePct = Math.max(sessionPct, weeklyPct);
-        const ctxPct = Math.round((tokens / limit) * 100);
+      // chrome.runtime.id becomes undefined once the extension context
+      // that injected this content script is gone (e.g. the extension
+      // was reloaded via chrome://extensions while this tab stayed
+      // open). Calling chrome.storage after that throws "Extension
+      // context invalidated" — expected in that situation, not a real
+      // bug, so it's checked for and the stale loop stopped quietly
+      // instead of spamming the console every scan cycle.
+      if (!chrome.runtime?.id) return;
+      try {
+        chrome.storage.local.get([TT.KEY.USAGE], (r) => {
+          if (chrome.runtime.lastError) return;
+          const usage = r[TT.KEY.USAGE];
+          const sessionPct = usage?.five_hour?.utilization || 0;
+          const weeklyPct = usage?.seven_day?.utilization || 0;
+          const ratePct = Math.max(sessionPct, weeklyPct);
+          const ctxPct = Math.round((tokens / limit) * 100);
 
-        if (ratePct > ctxPct) {
-          updateBar(ratePct, 100, true);
-        } else {
-          updateBar(tokens, limit, false);
-        }
-      });
+          if (ratePct > ctxPct) {
+            updateBar(ratePct, 100, true);
+          } else {
+            updateBar(tokens, limit, false);
+          }
+        });
+      } catch (_) {
+        // Context invalidated between the check above and this call —
+        // same stale-tab situation, same handling.
+      }
     } else {
       updateBar(tokens, limit, false);
     }
