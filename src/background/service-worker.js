@@ -36,7 +36,14 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 function triggerUsageFetch() {
   chrome.tabs.query({ url: "https://claude.ai/*" }, (tabs) => {
     if (tabs.length > 0) {
-      chrome.tabs.sendMessage(tabs[0].id, { type: "FETCH_CLAUDE_USAGE" });
+      chrome.tabs.sendMessage(tabs[0].id, { type: "FETCH_CLAUDE_USAGE" }, () => {
+        // "Could not establish connection" here means the tab's content
+        // script isn't listening yet (still loading, or Chrome has the
+        // tab discarded/asleep) — expected and harmless, not a failure.
+        // Reading lastError inside the callback marks it handled so
+        // Chrome doesn't also log an unhandled promise rejection.
+        void chrome.runtime.lastError;
+      });
     }
   });
 }
@@ -63,7 +70,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     (async () => {
       const settings = await Storage.getSettings();
       if (settings.notify_response_ready === false) return;
-      chrome.notifications.create("tt_response_ready", +Date.now(), {
+      chrome.notifications.create(`tt_response_ready_${Date.now()}`, {
         type: "basic",
         iconUrl: ICON,
         title: `${msg.platformName} — Response ready`,
@@ -137,9 +144,9 @@ const THRESHOLDS = [50, 75, 90, 100];
 
 async function shouldNotify(stateKey, currentPct, settings) {
   const enabled = THRESHOLDS.filter(t => {
-    if (t === 50) return settings.notify_50;
-    if (t === 75) return settings.notify_75;
-    if (t === 90) return settings.notify_90;
+    if (t === 50)  return settings.notify_50;
+    if (t === 75)  return settings.notify_75;
+    if (t === 90)  return settings.notify_90;
     if (t === 100) return settings.notify_100;
     return false;
   });
@@ -167,21 +174,21 @@ async function shouldNotify(stateKey, currentPct, settings) {
 async function checkRateLimitNotifications(usage) {
   const settings = await Storage.getSettings();
   const sessionPct = usage.five_hour?.utilization || 0;
-  const weeklyPct = usage.seven_day?.utilization || 0;
-  const maxPct = Math.max(sessionPct, weeklyPct);
+  const weeklyPct  = usage.seven_day?.utilization  || 0;
+  const maxPct     = Math.max(sessionPct, weeklyPct);
 
   const threshold = await shouldNotify("claude_rate", maxPct, settings);
   if (!threshold) return;
 
   const isSession = sessionPct >= weeklyPct;
-  const pct = Math.round(isSession ? sessionPct : weeklyPct);
+  const pct       = Math.round(isSession ? sessionPct : weeklyPct);
   const limitType = isSession ? "5-hour session" : "7-day weekly";
-  const priority = threshold >= 90 ? 2 : 1;
+  const priority  = threshold >= 90 ? 2 : 1;
 
   const tips = {
-    50: "You're halfway through your Claude limit.",
-    75: "Only 25% of your Claude limit remaining.",
-    90: "Almost out — consider wrapping up soon.",
+    50:  "You're halfway through your Claude limit.",
+    75:  "Only 25% of your Claude limit remaining.",
+    90:  "Almost out — consider wrapping up soon.",
     100: "Limit reached. Usage will be restricted.",
   };
 
@@ -196,9 +203,9 @@ async function checkRateLimitNotifications(usage) {
 // ── Context window notifications ───────────────────────────────────
 async function checkContextNotifications(platform, used, limit) {
   if (!used || !limit) return;
-  const settings = await Storage.getSettings();
-  const pct = Math.round((used / limit) * 100);
-  const name = TT.PLATFORMS[platform]?.label || platform;
+  const settings  = await Storage.getSettings();
+  const pct       = Math.round((used / limit) * 100);
+  const name      = TT.PLATFORMS[platform]?.label || platform;
   const remaining = Math.round((limit - used) / 1000);
 
   const threshold = await shouldNotify(`ctx_${platform}`, pct, settings);
@@ -207,9 +214,9 @@ async function checkContextNotifications(platform, used, limit) {
   const priority = threshold >= 90 ? 2 : 1;
 
   const messages = {
-    50: `~${remaining}k tokens remaining. You're halfway through this conversation's context.`,
-    75: `~${remaining}k tokens remaining. Consider starting a new chat soon.`,
-    90: `~${remaining}k tokens remaining. Context window nearly full — start a new chat.`,
+    50:  `~${remaining}k tokens remaining. You're halfway through this conversation's context.`,
+    75:  `~${remaining}k tokens remaining. Consider starting a new chat soon.`,
+    90:  `~${remaining}k tokens remaining. Context window nearly full — start a new chat.`,
     100: `Context window full. The model may lose earlier parts of your conversation.`,
   };
 
