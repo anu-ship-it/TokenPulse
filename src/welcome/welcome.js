@@ -1,4 +1,3 @@
-// Set logo via extension URL so relative paths never break
 const logoEl = document.getElementById('nav-logo');
 if (logoEl && typeof chrome !== 'undefined' && chrome.runtime) {
   logoEl.src = chrome.runtime.getURL('icons/icon48.png');
@@ -47,20 +46,16 @@ function render() {
   }
 }
 
-// Wire buttons via addEventListener — no inline onclick allowed under MV3 CSP
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('backBtn')?.addEventListener('click', () => nav(-1));
   document.getElementById('nextBtn')?.addEventListener('click', () => nav(1));
+  document.getElementById('launcherBack')?.addEventListener('click', () => nav(-1));
 
-  // launcher back button
-  document.querySelector('.launcher .btn-back')?.addEventListener('click', () => nav(-1));
-
-  // platform open buttons
-  document.getElementById('lbtn-claude')?.addEventListener('click',    () => open_('https://claude.ai'));
-  document.getElementById('lbtn-chatgpt')?.addEventListener('click',   () => open_('https://chatgpt.com'));
-  document.getElementById('lbtn-gemini')?.addEventListener('click',    () => open_('https://gemini.google.com'));
-  document.getElementById('lbtn-deepseek')?.addEventListener('click',  () => open_('https://chat.deepseek.com'));
-  document.getElementById('lbtn-grok')?.addEventListener('click',      () => open_('https://www.grok.com'));
+  document.getElementById('lbtn-claude')?.addEventListener('click', () => open_('https://claude.ai'));
+  document.getElementById('lbtn-chatgpt')?.addEventListener('click', () => open_('https://chatgpt.com'));
+  document.getElementById('lbtn-gemini')?.addEventListener('click', () => open_('https://gemini.google.com'));
+  document.getElementById('lbtn-deepseek')?.addEventListener('click', () => open_('https://chat.deepseek.com'));
+  document.getElementById('lbtn-grok')?.addEventListener('click', () => open_('https://grok.com'));
 
   render();
 });
