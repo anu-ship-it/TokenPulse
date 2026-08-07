@@ -3,6 +3,7 @@
 const STORE_REVIEW_URL = "https://chromewebstore.google.com/detail/tokenpulse-%E2%80%94-chatgpt-clau/oimclhdbljodjkankcnalklchfcehhic/reviews";
 const FORMSPREE_URL = "https://formspree.io/f/xqeoqzdg";
 const WEBSITE_URL = "https://token-pulse.in";
+const AUTH_PAGE_URL = "https://token-pulse.in/auth.html";
 
 // ── Helpers ────────────────────────────────────────────────────────
 function fk(n) {
@@ -334,6 +335,10 @@ function renderMain(state) {
          <button class="meta-link" id="main-website-btn">🌐 Website</button>
          <span class="meta-dot">·</span>
         <button class="meta-link" id="main-support-btn">Help</button>
+        <span class="meta-dot">·</span>
+        ${state.session
+          ? `<button class="meta-link" id="main-signout-btn">${state.session.user?.email || "Account"} · Sign out</button>`
+          : `<button class="meta-link" id="main-signin-btn">Sign in</button>`}
       </div>
       <button class="new-chat" id="new-chat-btn">+ New chat</button>
     </div>
@@ -357,6 +362,22 @@ function renderMain(state) {
     chrome.tabs.create({ url: "https://anu-ship-it.github.io/TokenPulse/support.html" });
     window.close();
   });
+
+  const signinBtn = document.getElementById("main-signin-btn");
+  if (signinBtn) {
+    signinBtn.addEventListener("click", () => {
+      chrome.tabs.create({ url: AUTH_PAGE_URL });
+      window.close();
+    });
+  }
+
+  const signoutBtn = document.getElementById("main-signout-btn");
+  if (signoutBtn) {
+    signoutBtn.addEventListener("click", async () => {
+      await chrome.storage.local.remove("tt_auth_session");
+      location.reload();
+    });
+  }
 }
 
 // ── Tips view ──────────────────────────────────────────────────────
@@ -610,6 +631,12 @@ async function init() {
 
   const data = await chrome.runtime.sendMessage({ type: "GET_ALL_DATA" });
 
+  // Session is written directly to chrome.storage.local by
+  // service-worker.js's onMessageExternal listener when token-pulse.in
+  // hands back a successful sign-in — read straight from storage here
+  // rather than adding a dedicated message round-trip for it.
+  const { tt_auth_session: session } = await chrome.storage.local.get("tt_auth_session");
+
   let liveModel = null;
   try {
     const live = await chrome.tabs.sendMessage(tab.id, { type: "GET_CONTEXT_STATE" });
@@ -626,6 +653,7 @@ async function init() {
     history:  data.history || [],
     platform,
     model:    liveModel,
+    session:  session || null,
   });
 }
 

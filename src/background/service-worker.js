@@ -237,3 +237,36 @@ async function checkContextNotifications(platform, used, limit) {
     priority
   );
 }
+
+// ── External auth handoff ───────────────────────────────────────
+// Only reachable from https://token-pulse.in (see manifest.json's
+// externally_connectable) — Chrome enforces that origin restriction
+// before this listener even fires, but sender.origin is checked again
+// here too, defense in depth, in case that manifest entry ever
+// broadens later without this file being revisited.
+const AUTH_ORIGIN = "https://token-pulse.in";
+const AUTH_SESSION_KEY = "tt_auth_session";
+
+chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
+  if (sender.origin !== AUTH_ORIGIN) {
+    sendResponse({ ok: false, error: "untrusted origin" });
+    return false;
+  }
+
+  if (msg.type === "AUTH_SUCCESS" && msg.session) {
+    chrome.storage.local.set({ [AUTH_SESSION_KEY]: msg.session }, () => {
+      sendResponse({ ok: true });
+    });
+    return true; // async — storage.set's callback fires later
+  }
+
+  if (msg.type === "AUTH_SIGN_OUT") {
+    chrome.storage.local.remove(AUTH_SESSION_KEY, () => {
+      sendResponse({ ok: true });
+    });
+    return true;
+  }
+
+  sendResponse({ ok: false, error: "unknown message type" });
+  return false;
+});
