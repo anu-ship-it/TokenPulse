@@ -51,11 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('nextBtn')?.addEventListener('click', () => nav(1));
   document.getElementById('launcherBack')?.addEventListener('click', () => nav(-1));
 
-  document.getElementById('lbtn-claude')?.addEventListener('click', () => open_('https://claude.ai'));
-  document.getElementById('lbtn-chatgpt')?.addEventListener('click', () => open_('https://chatgpt.com'));
-  document.getElementById('lbtn-gemini')?.addEventListener('click', () => open_('https://gemini.google.com'));
-  document.getElementById('lbtn-deepseek')?.addEventListener('click', () => open_('https://chat.deepseek.com'));
-  document.getElementById('lbtn-grok')?.addEventListener('click', () => open_('https://grok.com'));
+  document.getElementById('lbtn-claude')?.addEventListener('click',    () => open_('https://claude.ai'));
+  document.getElementById('lbtn-chatgpt')?.addEventListener('click',   () => open_('https://chatgpt.com'));
+  document.getElementById('lbtn-gemini')?.addEventListener('click',    () => open_('https://gemini.google.com'));
+  document.getElementById('lbtn-deepseek')?.addEventListener('click',  () => open_('https://chat.deepseek.com'));
+  document.getElementById('lbtn-grok')?.addEventListener('click',      () => open_('https://grok.com'));
 
   render();
 });
