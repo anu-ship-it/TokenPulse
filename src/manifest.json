@@ -57,6 +57,6 @@
   },
   "web_accessible_resources": [],
   "externally_connectable": {
-    "matches": ["https://token-pulse.in/*"]
+    "matches": ["https://token-pulse.in/*", "https://www.token-pulse.in/*"]
   }
 }
