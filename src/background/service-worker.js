@@ -10,7 +10,7 @@ const ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmH
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (reason === "install") {
     chrome.tabs.create({ url: chrome.runtime.getURL("welcome/welcome.html") });
-    chrome.runtime.setUninstallURL("https://token-pulse.in/uninstall");
+    chrome.runtime.setUninstallURL("https://anu-ship-it.github.io/TokenPulse/uninstall.html");
   }
   await setupAlarm();
 });
@@ -244,11 +244,11 @@ async function checkContextNotifications(platform, used, limit) {
 // before this listener even fires, but sender.origin is checked again
 // here too, defense in depth, in case that manifest entry ever
 // broadens later without this file being revisited.
-const AUTH_ORIGIN = "https://token-pulse.in";
+const AUTH_ORIGINS = ["https://token-pulse.in", "https://www.token-pulse.in"];
 const AUTH_SESSION_KEY = "tt_auth_session";
 
 chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
-  if (sender.origin !== AUTH_ORIGIN) {
+  if (!AUTH_ORIGINS.includes(sender.origin)) {
     sendResponse({ ok: false, error: "untrusted origin" });
     return false;
   }
