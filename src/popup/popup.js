@@ -475,7 +475,7 @@ function renderInsights(state) {
     ? `<div class="no-history" style="padding:24px 14px">No activity yet this week.<br>Come back after a few conversations.</div>`
     : `
       <div class="insight-grid">
-        ${stats.topPlatformLabel ? insightCard("⭐", stats.topPlatformLabel, "Most used this week") : ""}
+        ${stats.topPlatformLabel ? insightCard("⭐", stats.topPlatformLabel, "Top platform this week (all tabs)") : ""}
         ${insightCard("📅", stats.daysActive, stats.daysActive === 1 ? "Day active" : "Days active")}
         ${insightCard("💬", stats.totalSessions, stats.totalSessions === 1 ? "Conversation" : "Conversations")}
         ${insightCard("💰", fmtCost(stats.totalCost), "Estimated cost")}
