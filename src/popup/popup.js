@@ -429,28 +429,28 @@ function renderTips(state) {
 // daily-history section on the main view (which stays token/cost-based
 // for users who want that detail). Built entirely from TT.KEY.HISTORY —
 // no new scraping, no new storage.
-function insightsForWeek(history) {
+function insightsForWeek(history, platform) {
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const weekRecs = (history || []).filter(h => h.ts >= weekAgo);
+  const weekRecs = (history || []).filter(h => h.ts >= weekAgo && h.platform === platform);
 
-  const byPlatform = {};
+  const byModel = {};
   let totalCost = 0;
   let totalSessions = 0;
   const activeDates = new Set();
 
   weekRecs.forEach(r => {
-    byPlatform[r.platform] = (byPlatform[r.platform] || 0) + (r.used || 0);
+    if (r.model) byModel[r.model] = (byModel[r.model] || 0) + (r.used || 0);
     totalCost += r.cost || 0;
     totalSessions += r.sessions || 1;
     activeDates.add(r.date);
   });
 
-  const topPlatform = Object.entries(byPlatform).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+  const topModel = Object.entries(byModel).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 
   return {
     hasData: weekRecs.length > 0,
-    topPlatform,
-    topPlatformLabel: topPlatform ? (TT.PLATFORMS[topPlatform]?.label || topPlatform) : null,
+    topModel,
+    topModelLabel: topModel ? (MODEL_LABELS[topModel] || topModel) : null,
     daysActive: activeDates.size,
     totalCost,
     totalSessions,
@@ -469,23 +469,23 @@ function insightCard(icon, value, label) {
 function renderInsights(state) {
   const root = document.getElementById("root");
   const pm = platformMeta(state.platform);
-  const stats = insightsForWeek(state.history);
+  const stats = insightsForWeek(state.history, state.platform);
 
   const body = !stats.hasData
-    ? `<div class="no-history" style="padding:24px 14px">No activity yet this week.<br>Come back after a few conversations.</div>`
+    ? `<div class="no-history" style="padding:24px 14px">No ${pm.badgeLabel} activity yet this week.<br>Come back after a few conversations.</div>`
     : `
       <div class="insight-grid">
-        ${stats.topPlatformLabel ? insightCard("⭐", stats.topPlatformLabel, "Top platform this week (all tabs)") : ""}
+        ${stats.topModelLabel ? insightCard("⭐", stats.topModelLabel, "Most used model") : ""}
         ${insightCard("📅", stats.daysActive, stats.daysActive === 1 ? "Day active" : "Days active")}
         ${insightCard("💬", stats.totalSessions, stats.totalSessions === 1 ? "Conversation" : "Conversations")}
         ${insightCard("💰", fmtCost(stats.totalCost), "Estimated cost")}
       </div>
-      <div style="font-size:10px;color:#3a3a3a;padding:0 14px 4px">Last 7 days, across all platforms</div>`;
+      <div style="font-size:10px;color:#3a3a3a;padding:0 14px 4px">Last 7 days, on ${pm.badgeLabel} only</div>`;
 
   root.innerHTML = `
     ${headerHTML(pm.badgeClass, pm.badgeLabel, TT.COLOR.GREEN, true, "insights")}
     <div class="section" style="padding-bottom:8px">
-      <div class="section-title">This Week</div>
+      <div class="section-title">This Week · ${pm.badgeLabel}</div>
     </div>
     ${body}
     <div class="footer"><span class="footer-note">v2.3.0</span></div>
