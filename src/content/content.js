@@ -1,525 +1,135 @@
-/**
- * content.js v2.3.0
- * Added: Grok support, JS-based bar width sync (replaces CSS width:100%)
- */
+const TT = {
+  // Fill in ANON_KEY from Supabase → Project Settings → API. Same value
+  // that belongs in auth.html — these two copies must be kept in sync
+  // manually, since they live in genuinely separate codebases (this
+  // extension vs. the website) that can't share a single file.
+  SUPABASE: {
+    URL: "https://didixxqgrwoxytphiabx.supabase.co",
+    ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpZGl4eHFncndveHl0cGhpYWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMjgzMzYsImV4cCI6MjEwMTcwNDMzNn0.1GOWsOpMVIq1TcmRAy9aJw6pIRdTsIGi72560veCDQg",
+  },
 
-(() => {
-  "use strict";
+  API: {
+    ORGS:  "https://claude.ai/api/organizations",
+    USAGE: (id) => `https://claude.ai/api/organizations/${id}/usage`,
+  },
 
-  const IS_CLAUDE = location.hostname.includes("claude.ai");
-  const IS_GPT = location.hostname.includes("chatgpt.com") || location.hostname.includes("openai.com");
-  const IS_GEMINI = location.hostname.includes("gemini.google.com");
-  const IS_DEEPSEEK = location.hostname.includes("chat.deepseek.com");
-  const IS_GROK = location.hostname.includes("grok.com");
+  // Single source of truth for everything platform-specific.
+  // content.js, service-worker.js, and popup.js all read from this —
+  // adding a new platform means editing ONLY this block plus LIMITS/
+  // COST_PER_M/MODEL_LABELS/TIPS below. Nothing else should ever
+  // hardcode a platform name again.
+  PLATFORMS: {
+    claude: {
+      hosts: ["claude.ai"],
+      label: "Claude",
+      badgeClass: "badge-claude",
+      newChatUrl: "https://claude.ai/new",
+      defaultLimitKey: "default",
+      defaultModelKey: "claude-sonnet-4",
+      hasRateLimits: true,
+    },
+    chatgpt: {
+      hosts: ["chatgpt.com", "openai.com"],
+      label: "ChatGPT",
+      badgeClass: "badge-chatgpt",
+      newChatUrl: "https://chatgpt.com/",
+      defaultLimitKey: "gpt-4o",
+      defaultModelKey: "gpt-4o",
+      hasRateLimits: false,
+    },
+    gemini: {
+      hosts: ["gemini.google.com"],
+      label: "Gemini",
+      badgeClass: "badge-gemini",
+      newChatUrl: "https://gemini.google.com/",
+      defaultLimitKey: "gemini-default",
+      defaultModelKey: "gemini-default",
+      hasRateLimits: false,
+    },
+    deepseek: {
+      hosts: ["chat.deepseek.com"],
+      label: "DeepSeek",
+      badgeClass: "badge-deepseek",
+      newChatUrl: "https://chat.deepseek.com/",
+      defaultLimitKey: "deepseek-default",
+      defaultModelKey: "deepseek-default",
+      hasRateLimits: false,
+    },
+    grok: {
+      hosts: ["grok.com"],
+      label: "Grok",
+      badgeClass: "badge-grok",
+      newChatUrl: "https://grok.com/",
+      defaultLimitKey: "grok-default",
+      defaultModelKey: "grok-default",
+      hasRateLimits: false,
+    },
+  },
 
-  if (!IS_CLAUDE && !IS_GPT && !IS_GEMINI && !IS_DEEPSEEK && !IS_GROK) return;
-
-  const PLATFORM = IS_CLAUDE ? "claude" : IS_GPT ? "chatgpt" : IS_GEMINI ? "gemini" : IS_DEEPSEEK ? "deepseek" : "grok";
-
-  let lastTokenCount = 0;
-  let lastSessionId = getSessionId();
-  let lastModel = "default";
-  let popupShown = false;
-  let rafPending = false;
-  let widthObserver = null;
-
-  // ── Session ID ─────────────────────────────────────────────────
-  function getSessionId() {
-    if (IS_CLAUDE) {
-      const m = location.pathname.match(/\/chat\/([a-z0-9-]+)/i);
-      return m ? m[1] : location.pathname;
-    }
-    if (IS_GPT) {
-      const m = location.pathname.match(/\/c\/([a-z0-9-]+)/i);
-      return m ? m[1] : "home";
-    }
-    if (IS_GROK) {
-      const m = location.pathname.match(/\/c\/([a-z0-9-]+)/i);
-      return m ? m[1] : "home";
-    }
-    return location.pathname + location.search;
-  }
-
-  // ── Model detection ────────────────────────────────────────────
-  function getModel() {
-    if (IS_CLAUDE) {
-      const btn = document.querySelector("[data-testid='model-selector'], button[aria-label*='claude']");
-      if (btn) {
-        const txt = btn.textContent.toLowerCase();
-        if (txt.includes("opus")) return "claude-opus-4";
-        if (txt.includes("haiku")) return "claude-haiku-4";
-        if (txt.includes("sonnet")) return "claude-sonnet-4";
-      }
-      return "claude-sonnet-4";
-    }
-    if (IS_GEMINI) {
-      const btn = document.querySelector("bard-mode-switcher, .model-switcher, [aria-label*='Gemini']");
-      if (btn) {
-        const txt = btn.textContent.toLowerCase();
-        if (txt.includes("1.5 pro")) return "gemini-1.5-pro";
-        if (txt.includes("1.5 flash")) return "gemini-1.5-flash";
-        if (txt.includes("2.0")) return "gemini-2.0-flash";
-        if (txt.includes("flash")) return "gemini-2.0-flash";
-        if (txt.includes("pro")) return "gemini-1.5-pro";
-      }
-      return "gemini-default";
-    }
-    if (IS_DEEPSEEK) {
-      const btn = document.querySelector('[class*="model"]');
-      if (btn) {
-        const txt = btn.textContent.toLowerCase();
-        if (txt.includes("r1")) return "deepseek-r1";
-        if (txt.includes("v3")) return "deepseek-v3";
-      }
-      return "deepseek-default";
-    }
-    if (IS_GROK) {
-      // grok.com's switcher shows tiers (Auto/Fast/Expert/Heavy), not raw
-      // model names — Expert/Heavy both map to Grok 4.5, Fast maps to 4.3
-      const btn = document.querySelector("#model-select-trigger");
-      const txt = btn ? btn.textContent.toLowerCase() : "";
-      if (txt.includes("heavy") || txt.includes("expert")) return "grok-4.5";
-      if (txt.includes("fast")) return "grok-4.3";
-      return "grok-default";
-    }
-    // ChatGPT
-    const btn = document.querySelector("[data-testid='model-switcher-dropdown-button'], button[aria-label*='GPT']");
-    const txt = btn ? btn.textContent.toLowerCase() : "";
-    if (txt.includes("o3")) return "o3";
-    if (txt.includes("o1")) return "o1";
-    if (txt.includes("4o")) return "gpt-4o";
-    if (txt.includes("3.5")) return "gpt-3.5";
-    return "gpt-4o";
-  }
-
-  // ── Cost estimation ────────────────────────────────────────────
-  function estimateCost(tokens, model) {
-    const pricePerM = TT.COST_PER_M[model] || TT.COST_PER_M["default"];
-    return (tokens / 1_000_000) * pricePerM;
-  }
-
-  // ── Token counting ─────────────────────────────────────────────
-  function countTokens() {
-    if (IS_CLAUDE) return countClaude();
-    if (IS_GEMINI) return countGemini();
-    if (IS_DEEPSEEK) return countDeepSeek();
-    if (IS_GROK) return countGrok();
-    return countGPT();
-  }
-
-  function countClaude() {
-    let best = null, bestLen = 0;
-    for (const el of document.body.children) {
-      if (el.id === "tt-bar" || el.id === "tt-popup") continue;
-      const len = (el.textContent || "").trim().length;
-      if (len > bestLen) { bestLen = len; best = el; }
-    }
-    if (!best || bestLen < 50) return 0;
-    const inputEl = document.querySelector("div[contenteditable='true']");
-    const inputText = inputEl ? (inputEl.textContent || "").trim() : "";
-    let text = (best.textContent || "").trim();
-    if (inputText && text.includes(inputText)) text = text.replace(inputText, "");
-    return Tokenizer.estimate(text);
-  }
-
-  function countGemini() {
-    const userEls = document.getElementsByTagName("user-query");
-    const modelEls = document.getElementsByTagName("model-response");
-    if (userEls.length === 0 && modelEls.length === 0) return 0;
-
-    let totalText = "";
-    Array.from(userEls).forEach(el => { totalText += (el.textContent || "").trim() + " "; });
-    Array.from(modelEls).forEach(el => {
-      const msgContent = el.querySelector("message-content");
-      const text = msgContent ? (msgContent.textContent || "").trim() : (el.textContent || "").trim();
-      totalText += text + " ";
-    });
-
-    const inputEl = document.querySelector("rich-textarea");
-    const inputText = inputEl ? (inputEl.textContent || "").trim() : "";
-    if (inputText && totalText.includes(inputText)) totalText = totalText.replace(inputText, "");
-    return Tokenizer.estimate(totalText.trim());
-  }
-
-  function countDeepSeek() {
-    const msgs = document.querySelectorAll('.ds-message');
-    if (msgs.length === 0) return 0;
-    const text = Array.from(msgs).map(el => el.textContent || "").join(" ");
-    const input = document.querySelector('textarea');
-    const inputText = input ? (input.value || "").trim() : "";
-    const clean = inputText && text.includes(inputText) ? text.replace(inputText, "") : text;
-    return Tokenizer.estimate(clean.trim());
-  }
-
-  function countGrok() {
-    const nodes = document.querySelectorAll("[data-testid='user-message'], [data-testid='assistant-message']");
-    if (nodes.length === 0) return 0;
-    const text = Array.from(nodes).map(el => el.textContent || "").join(" ");
-    const inputEl = document.querySelector("[data-testid='chat-input'] [contenteditable='true']");
-    const inputText = inputEl ? (inputEl.textContent || "").trim() : "";
-    const clean = inputText && text.includes(inputText) ? text.replace(inputText, "") : text;
-    return Tokenizer.estimate(clean.trim());
-  }
-
-  function countGPT() {
-    const selectors = [
-      "article[data-testid]",
-      "div[data-message-id]",
-      "[data-testid^='conversation-turn']",
-    ];
-    for (const sel of selectors) {
-      try {
-        const nodes = document.querySelectorAll(sel);
-        if (nodes.length > 0) {
-          return Tokenizer.estimateMessages(Array.from(nodes).map(n => n.textContent || ""));
-        }
-      } catch (_) { }
-    }
-    return 0;
-  }
-
-  // ── Auto-save daily usage ──────────────────────────────────────
-  // sessionsSeenToday tracks which session IDs have already been counted
-  // for today's record, so the insights view can show "conversations
-  // today/this week" without re-scraping anything — it's purely a count
-  // of distinct sessions, reusing the session-change detection the URL
-  // watcher already does for lastSessionId.
-  let sessionsSeenToday = new Set();
-  let sessionsSeenDate = new Date().toDateString();
-
-  function saveDailyUsage(tokens, limit, model) {
-    if (tokens < 50) return;
-    const today = new Date().toDateString();
-    const key = TT.KEY.HISTORY;
-
-    if (today !== sessionsSeenDate) {
-      sessionsSeenDate = today;
-      sessionsSeenToday = new Set();
-    }
-    const isNewSessionToday = !sessionsSeenToday.has(lastSessionId);
-    if (isNewSessionToday) sessionsSeenToday.add(lastSessionId);
-
-    chrome.storage.local.get([key], (r) => {
-      const history = r[key] || [];
-      const recKey = PLATFORM + "_" + today;
-      const idx = history.findIndex(x => x.key === recKey);
-      const existing = idx >= 0 ? history[idx] : null;
-
-      // Existing early-return only guarded the peak-token update; session
-      // count must still increment even when tokens haven't grown, so it's
-      // handled before the early return rather than folded into the same
-      // condition.
-      if (existing && isNewSessionToday) {
-        existing.sessions = (existing.sessions || 1) + 1;
-        history[idx] = existing;
-        chrome.storage.local.set({ [key]: history.slice(-60) });
-      }
-      if (existing && existing.used >= tokens) return;
-
-      const cost = estimateCost(tokens, model);
-      const rec = {
-        key: recKey, platform: PLATFORM, model, used: tokens, limit, cost,
-        ts: Date.now(), date: today,
-        sessions: existing ? (existing.sessions || 1) : 1,
-      };
-
-      if (idx >= 0) history[idx] = rec; else history.push(rec);
-      chrome.storage.local.set({ [key]: history.slice(-60) });
-    });
-  }
-
-  // ── Claude API fetch ───────────────────────────────────────────
-  async function fetchClaudeUsage() {
-    try {
-      const orgsRes = await fetch(TT.API.ORGS, { credentials: "include" });
-      if (!orgsRes.ok) return null;
-      const orgs = await orgsRes.json();
-      const chatOrg = orgs.find(o => Array.isArray(o.capabilities) && o.capabilities.includes("chat"));
-      if (!chatOrg) return null;
-
-      const usageRes = await fetch(TT.API.USAGE(chatOrg.uuid), { credentials: "include" });
-      if (!usageRes.ok) return null;
-      const data = await usageRes.json();
-
-      return {
-        five_hour: { utilization: data.five_hour?.utilization ?? 0, resets_at: data.five_hour?.resets_at ?? null },
-        seven_day: { utilization: data.seven_day?.utilization ?? 0, resets_at: data.seven_day?.resets_at ?? null },
-      };
-    } catch { return null; }
-  }
-
-  // ── Session watcher ────────────────────────────────────────────
-  function watchSession() {
-    let lastUrl = location.href;
-    setInterval(() => {
-      if (location.href === lastUrl) return;
-      lastUrl = location.href;
-      const newId = getSessionId();
-      if (newId !== lastSessionId) {
-        lastSessionId = newId;
-        lastTokenCount = 0;
-        popupShown = false;
-        setTimeout(() => { injectBar(); scan(); }, 800);
-      }
-    }, 500);
-    window.addEventListener("popstate", () => setTimeout(scan, 800));
-  }
-
-  // ── Scan ───────────────────────────────────────────────────────
-  function scan() {
-    const tokens = countTokens();
-    const model = getModel();
-    const limit = TT.LIMITS[model] || TT.LIMITS["default"];
-    lastTokenCount = tokens;
-    lastModel = model;
-
-    if (IS_CLAUDE) {
-      // chrome.runtime.id becomes undefined once the extension context
-      // that injected this content script is gone (e.g. the extension
-      // was reloaded via chrome://extensions while this tab stayed
-      // open). Calling chrome.storage after that throws "Extension
-      // context invalidated" — expected in that situation, not a real
-      // bug, so it's checked for and the stale loop stopped quietly
-      // instead of spamming the console every scan cycle.
-      if (!chrome.runtime?.id) return;
-      try {
-        chrome.storage.local.get([TT.KEY.USAGE], (r) => {
-          if (chrome.runtime.lastError) return;
-          const usage = r[TT.KEY.USAGE];
-          const sessionPct = usage?.five_hour?.utilization || 0;
-          const weeklyPct = usage?.seven_day?.utilization || 0;
-          const ratePct = Math.max(sessionPct, weeklyPct);
-          const ctxPct = Math.round((tokens / limit) * 100);
-
-          if (ratePct > ctxPct) {
-            updateBar(ratePct, 100, true);
-          } else {
-            updateBar(tokens, limit, false);
-          }
-        });
-      } catch (_) {
-        // Context invalidated between the check above and this call —
-        // same stale-tab situation, same handling.
-      }
-    } else {
-      updateBar(tokens, limit, false);
-    }
-
-    saveDailyUsage(tokens, limit, model);
-
-    try {
-      chrome.runtime.sendMessage({
-        type: "CONTEXT_UPDATE", platform: PLATFORM,
-        used: tokens, limit, model, cost: estimateCost(tokens, model),
-      });
-    } catch (_) { }
-  }
-
-  function scheduleScan() {
-    if (rafPending) return;
-    rafPending = true;
-    requestAnimationFrame(() => { rafPending = false; scan(); });
-  }
-
-  // ── MutationObserver ───────────────────────────────────────────
-  function startObserver() {
-    const obs = new MutationObserver(muts => {
-      if (muts.some(m => m.addedNodes.length > 0)) scheduleScan();
-    });
-    obs.observe(document.body, { childList: true, subtree: true });
-  }
-
-  function startResponseReadyDetector() {
-    let hadActivity = false;
-    let streamTimer = null;
-
-    const obs = new MutationObserver(() => {
-      hadActivity = true;
-      clearTimeout(streamTimer);
-      streamTimer = setTimeout(() => {
-        if (hadActivity) {
-          hadActivity = false;
-          onResponseReady();
-        }
-      }, 2000);
-    });
-
-    obs.observe(document.body, { childList: true, subtree: true, characterData: true });
-  }
-
-  function onResponseReady() {
-    if (document.visibilityState !== "hidden") return;
-    if (lastTokenCount < 50) return;
-
-    const platformName = TT.PLATFORMS[PLATFORM]?.label || PLATFORM;
-
-    try {
-      chrome.runtime.sendMessage({
-        type: "RESPONSE_READY",
-        platform: PLATFORM,
-        platformName,
-      });
-    } catch (_) { }
-  }
-
-  // ── Bar injection ──────────────────────────────────────────────
-  function resolveWrapper() {
-    if (IS_CLAUDE) return document.querySelector("fieldset, div[contenteditable='true']");
-    if (IS_GEMINI) return document.querySelector("input-area-v2, rich-textarea");
-    if (IS_DEEPSEEK) return document.querySelector('textarea');
-    if (IS_GROK) return document.querySelector(".query-bar, [data-testid='chat-input']");
-    return document.querySelector("form:has(#prompt-textarea), form:has(textarea)");
-  }
-
-  // Matches #tt-bar's rendered width to the anchor element's actual
-  // rendered width via JS, instead of relying on CSS width:100% —
-  // that assumption ("parent width == anchor width") holds by
-  // coincidence on some platforms and breaks on others (e.g. Grok,
-  // where .query-bar self-constrains its own width rather than being
-  // constrained by its parent). This is correct for any DOM structure.
-  function syncBarWidth() {
-    const bar = document.getElementById("tt-bar");
-    const anchor = resolveWrapper();
-    if (!bar || !anchor) return;
-    const w = anchor.getBoundingClientRect().width;
-    if (w > 0) bar.style.width = w + "px";
-  }
-
-  function injectBar() {
-    const existing = document.getElementById("tt-bar");
-    if (existing && document.contains(existing)) { syncBarWidth(); return; }
-    if (existing) existing.remove();
-
-    const bar = document.createElement("div");
-    bar.id = "tt-bar";
-    const inner = document.createElement("div");
-    inner.className = "tt-inner";
-    const label = document.createElement("span");
-    label.className = "tt-label";
-    label.textContent = "TOKENS";
-    const track = document.createElement("div");
-    track.className = "tt-track";
-    const fill = document.createElement("div");
-    fill.className = "tt-fill";
-    fill.id = "tt-fill";
-    track.appendChild(fill);
-    const count = document.createElement("span");
-    count.className = "tt-count";
-    count.id = "tt-count";
-    count.textContent = "—";
-
-    inner.append(label, track, count);
-    bar.appendChild(inner);
-
-    const anchor = () => {
-      const w = resolveWrapper();
-      if (w?.parentNode) { w.parentNode.insertBefore(bar, w); return true; }
-      return false;
-    };
-
-    if (!anchor()) {
-      document.body.appendChild(bar);
-      const t = setInterval(() => { if (anchor()) { clearInterval(t); attachWidthObserver(); } }, 800);
-      setTimeout(() => clearInterval(t), 15000);
-    } else {
-      attachWidthObserver();
-    }
-  }
-
-  function attachWidthObserver() {
-    if (widthObserver) widthObserver.disconnect();
-    const anchor = resolveWrapper();
-    if (!anchor) return;
-    widthObserver = new ResizeObserver(syncBarWidth);
-    widthObserver.observe(anchor);
-    syncBarWidth();
-  }
-
-  // ── Bar update ─────────────────────────────────────────────────
-  function updateBar(used, limit, isRateLimit) {
-    const fill = document.getElementById("tt-fill");
-    const count = document.getElementById("tt-count");
-    if (!fill || !count) { injectBar(); return; }
-
-    const pct = Math.min((used / limit) * 100, 100);
-    const remaining = Math.max(limit - used, 0);
-
-    fill.style.width = pct + "%";
-    fill.className = "tt-fill" + (pct >= TT.DANGER ? " tt-red" : pct >= TT.WARN ? " tt-yellow" : "");
-
-    if (isRateLimit) {
-      count.textContent = `Session ${Math.round(pct)}% used`;
-    } else {
-      count.textContent = formatK(remaining) + " left";
-    }
-
-    count.className = "tt-count" + (pct >= TT.DANGER ? " tt-red" : pct >= TT.WARN ? " tt-yellow" : "");
-
-    if (pct >= 100 && !popupShown) { popupShown = true; showPopup(limit); }
-  }
-
-  function formatK(n) {
-    return n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n);
-  }
-
-  // ── Exhaustion popup ───────────────────────────────────────────
-  function showPopup(limit) {
-    if (document.getElementById("tt-popup")) return;
-    const popup = document.createElement("div");
-    popup.id = "tt-popup";
-    const box = document.createElement("div");
-    box.className = "tt-popup-box";
-    const icon = document.createElement("div"); icon.className = "tt-popup-icon"; icon.textContent = "⚠";
-    const title = document.createElement("div"); title.className = "tt-popup-title"; title.textContent = "Context Limit Reached";
-    const body = document.createElement("div"); body.className = "tt-popup-body"; body.textContent = `This conversation has used ~${formatK(limit)} tokens — the full context window.`;
-    const tip = document.createElement("div"); tip.className = "tt-popup-tip"; tip.textContent = "Start a new chat to reset.";
-    const btn = document.createElement("button"); btn.className = "tt-popup-btn"; btn.textContent = "Got it";
-    btn.addEventListener("click", () => { popup.style.opacity = "0"; setTimeout(() => popup.remove(), 300); });
-    box.append(icon, title, body, tip, btn);
-    popup.appendChild(box);
-    document.body.appendChild(popup);
-    setTimeout(() => { if (document.getElementById("tt-popup")) { popup.style.opacity = "0"; setTimeout(() => popup.remove(), 300); } }, 12000);
-  }
-
-  // ── Message listener ───────────────────────────────────────────
-  chrome.runtime.onMessage.addListener((msg, _, sendResponse) => {
-    if (msg.type === "FETCH_CLAUDE_USAGE" && IS_CLAUDE) {
-      fetchClaudeUsage().then(usage => {
-        try { chrome.runtime.sendMessage({ type: "CLAUDE_USAGE_RESULT", usage }); } catch (_) { }
-      });
-    }
-    if (msg.type === "GET_CONTEXT_STATE") {
-      sendResponse({
-        used: lastTokenCount,
-        limit: TT.LIMITS[lastModel] || TT.LIMITS["default"],
-        model: lastModel,
-        cost: estimateCost(lastTokenCount, lastModel),
-        platform: PLATFORM,
-      });
-    }
-    return true;
-  });
-
-  // ── Boot ───────────────────────────────────────────────────────
-  function init() {
-    injectBar();
-    startObserver();
-    startResponseReadyDetector();
-    watchSession();
-    setTimeout(scan, 800);
-    setTimeout(scan, 2500);
-
-    if (IS_CLAUDE) {
-      fetchClaudeUsage().then(usage => {
-        if (usage) { try { chrome.runtime.sendMessage({ type: "CLAUDE_USAGE_RESULT", usage }); } catch (_) { } }
-      });
-    }
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
-
-})();
+  LIMITS: {
+    "default":            200000,
+    "claude-sonnet-4":    200000,
+    "claude-opus-4":      200000,
+    "claude-haiku-4":     200000,
+    "gpt-4o":             128000,
+    "gpt-3.5":            16385,
+    "o1":                 200000,
+    "o3":                 200000,
+    "gemini-1.5-pro":     1000000,
+    "gemini-1.5-flash":   1000000,
+    "gemini-2.0-flash":   1000000,
+    "gemini-default":     1000000,
+    "deepseek-v3":        128000,
+    "deepseek-r1":        128000,
+    "deepseek-default":   128000,
+    "grok-4.5":           500000,
+    "grok-4.3":           1000000,
+    "grok-default":       500000,
+  },
+  COST_PER_M: {
+    "default":            3.00,
+    "claude-sonnet-4":    3.00,
+    "claude-opus-4":      15.00,
+    "claude-haiku-4":     0.80,
+    "gpt-4o":             2.50,
+    "gpt-3.5":            0.50,
+    "o1":                 15.00,
+    "o3":                 10.00,
+    "gemini-1.5-pro":     3.50,
+    "gemini-1.5-flash":   0.075,
+    "gemini-2.0-flash":   0.10,
+    "gemini-default":     0.10,
+    "deepseek-v3":        0.27,
+    "deepseek-r1":        0.55,
+    "deepseek-default":   0.27,
+    "grok-4.5":           2.00,
+    "grok-4.3":           1.25,
+    "grok-default":       2.00,
+  },
+  WARN:   70,
+  DANGER: 90,
+  COLOR: {
+    GREEN:  "#06b6d4",
+    YELLOW: "#f59e0b",
+    RED:    "#ef4444",
+  },
+  KEY: {
+    ORG_ID:       "tt_org_id",
+    USAGE:        "tt_claude_usage",
+    CONTEXT:      "tt_context",
+    HISTORY:      "tt_history",
+    SETTINGS:     "tt_settings",
+    NOTIFIED:     "tt_last_notified",
+    AUTH_SESSION: "tt_auth_session",
+  },
+  ALARM: "tt_fetch",
+  DEFAULTS: {
+    notify_50:       false,
+    notify_75:       true,
+    notify_90:       true,
+    notify_100:      true,
+    notify_response_ready: true,
+    refresh_minutes: 5,
+    show_bar:        true,
+  },
+};

@@ -374,7 +374,7 @@ function renderMain(state) {
   const signoutBtn = document.getElementById("main-signout-btn");
   if (signoutBtn) {
     signoutBtn.addEventListener("click", async () => {
-      await chrome.storage.local.remove("tt_auth_session");
+      await chrome.storage.local.remove(TT.KEY.AUTH_SESSION);
       location.reload();
     });
   }
@@ -635,7 +635,8 @@ async function init() {
   // service-worker.js's onMessageExternal listener when token-pulse.in
   // hands back a successful sign-in — read straight from storage here
   // rather than adding a dedicated message round-trip for it.
-  const { tt_auth_session: session } = await chrome.storage.local.get("tt_auth_session");
+  const sessionResult = await chrome.storage.local.get(TT.KEY.AUTH_SESSION);
+  const session = sessionResult[TT.KEY.AUTH_SESSION];
 
   let liveModel = null;
   try {

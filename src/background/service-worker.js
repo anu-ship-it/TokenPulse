@@ -16,6 +16,7 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
 });
 
 chrome.runtime.onStartup.addListener(setupAlarm);
+chrome.runtime.onStartup.addListener(refreshSessionIfNeeded);
 
 async function setupAlarm() {
   const settings = await Storage.getSettings();
@@ -31,6 +32,7 @@ async function setupAlarm() {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name !== TT.ALARM) return;
   triggerUsageFetch();
+  refreshSessionIfNeeded();
 });
 
 function triggerUsageFetch() {
@@ -245,7 +247,6 @@ async function checkContextNotifications(platform, used, limit) {
 // here too, defense in depth, in case that manifest entry ever
 // broadens later without this file being revisited.
 const AUTH_ORIGINS = ["https://token-pulse.in", "https://www.token-pulse.in"];
-const AUTH_SESSION_KEY = "tt_auth_session";
 
 chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
   if (!AUTH_ORIGINS.includes(sender.origin)) {
@@ -254,14 +255,14 @@ chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === "AUTH_SUCCESS" && msg.session) {
-    chrome.storage.local.set({ [AUTH_SESSION_KEY]: msg.session }, () => {
+    chrome.storage.local.set({ [TT.KEY.AUTH_SESSION]: msg.session }, () => {
       sendResponse({ ok: true });
     });
     return true; // async — storage.set's callback fires later
   }
 
   if (msg.type === "AUTH_SIGN_OUT") {
-    chrome.storage.local.remove(AUTH_SESSION_KEY, () => {
+    chrome.storage.local.remove(TT.KEY.AUTH_SESSION, () => {
       sendResponse({ ok: true });
     });
     return true;
@@ -270,3 +271,45 @@ chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
   sendResponse({ ok: false, error: "unknown message type" });
   return false;
 });
+
+// ── Session token refresh ────────────────────────────────────────
+// Supabase access tokens expire (1hr by default). Nothing else in this
+// extension renews them — without this, sync/budgets/etc built on top
+// of the stored session would silently start failing an hour after
+// sign-in with no visible symptom until something using it breaks.
+const REFRESH_MARGIN_SECONDS = 300; // refresh 5 min before actual expiry
+
+async function refreshSessionIfNeeded() {
+  const { [TT.KEY.AUTH_SESSION]: session } = await chrome.storage.local.get(TT.KEY.AUTH_SESSION);
+  if (!session?.refresh_token || !session?.expires_at) return;
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (session.expires_at - nowSeconds > REFRESH_MARGIN_SECONDS) return; // still fresh
+
+  try {
+    const res = await fetch(`${TT.SUPABASE.URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": TT.SUPABASE.ANON_KEY,
+      },
+      body: JSON.stringify({ refresh_token: session.refresh_token }),
+    });
+
+    if (!res.ok) {
+      // refresh_token itself is invalid/expired/revoked (e.g. unused
+      // for ~30 days) — clear the stale session so the popup correctly
+      // falls back to "Sign in" instead of showing a permanently-broken
+      // signed-in state with no way to recover short of manual cleanup.
+      await chrome.storage.local.remove(TT.KEY.AUTH_SESSION);
+      return;
+    }
+
+    const newSession = await res.json();
+    await chrome.storage.local.set({ [TT.KEY.AUTH_SESSION]: newSession });
+  } catch (_) {
+    // Network hiccup — leave the existing session alone and retry on
+    // the next alarm tick, rather than wiping a valid session over a
+    // transient offline moment.
+  }
+}
