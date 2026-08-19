@@ -29,10 +29,68 @@ async function setupAlarm() {
 }
 
 // ── Alarm ──────────────────────────────────────────────────────────
-chrome.alarms.onAlarm.addListener((alarm) => {
+// ── Cross-device history sync ──────────────────────────────────────
+// No-op entirely when signed out — free/local-only users are completely
+// unaffected by any of this. When signed in, upserts the local history
+// (capped at 60 records already) into Supabase's usage_history table.
+// Upserting the whole set every tick, rather than tracking a "last
+// synced" cursor, avoids a whole class of sync-state bugs at this scale
+// — the payload is tiny and the unique (user_id, platform, date)
+// constraint makes repeat upserts of unchanged rows harmless.
+async function syncHistoryToCloud() {
+  const { [TT.KEY.AUTH_SESSION]: session } = await chrome.storage.local.get(TT.KEY.AUTH_SESSION);
+  if (!session?.access_token || !session?.user?.id) return;
+
+  const history = await Storage.getHistory();
+  if (!history.length) return;
+
+  // date derived from ts (a real Date.now() timestamp), not from the
+  // toDateString() display string already on the record — that string
+  // ("Mon Aug 17 2026") isn't ISO format, and trusting Postgres to
+  // parse it implicitly is exactly the kind of fragile-but-usually-works
+  // assumption that's caused real bugs elsewhere in this project.
+  const rows = history.map(rec => ({
+    user_id: session.user.id,
+    platform: rec.platform,
+    date: new Date(rec.ts).toISOString().slice(0, 10),
+    used: rec.used,
+    limit_at_time: rec.limit,
+    model: rec.model,
+    cost: rec.cost,
+    sessions: rec.sessions || 1,
+  }));
+
+  try {
+    await fetch(
+      `${TT.SUPABASE.URL}/rest/v1/usage_history?on_conflict=user_id,platform,date`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": TT.SUPABASE.ANON_KEY,
+          "Authorization": `Bearer ${session.access_token}`,
+          "Prefer": "resolution=merge-duplicates,return=minimal",
+        },
+        body: JSON.stringify(rows),
+      }
+    );
+    // Deliberately not checking res.ok here beyond letting a failure
+    // fall through silently — cloud sync failing must never affect the
+    // local token bar or history, which have to keep working
+    // regardless of network/auth state. Next alarm tick retries.
+  } catch (_) {
+    // Same handling — offline or any other failure, just retry later.
+  }
+}
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name !== TT.ALARM) return;
   triggerUsageFetch();
-  refreshSessionIfNeeded();
+  // Sequenced, not fire-and-forget in parallel: if the token needed
+  // refreshing, sync must use the NEW access_token, not whatever was
+  // in storage at the moment this tick started.
+  await refreshSessionIfNeeded();
+  await syncHistoryToCloud();
 });
 
 function triggerUsageFetch() {
@@ -257,6 +315,7 @@ chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
   if (msg.type === "AUTH_SUCCESS" && msg.session) {
     chrome.storage.local.set({ [TT.KEY.AUTH_SESSION]: msg.session }, () => {
       sendResponse({ ok: true });
+      syncHistoryToCloud(); // don't make the user wait for the next alarm tick
     });
     return true; // async — storage.set's callback fires later
   }
