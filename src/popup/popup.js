@@ -4,6 +4,7 @@ const STORE_REVIEW_URL = "https://chromewebstore.google.com/detail/tokenpulse-%E
 const FORMSPREE_URL = "https://formspree.io/f/xqeoqzdg";
 const WEBSITE_URL = "https://token-pulse.in";
 const AUTH_PAGE_URL = "https://token-pulse.in/auth.html";
+const PRICING_PAGE_URL = "https://token-pulse.in/pricing"; // doesn't exist yet — placeholder until Stripe Checkout is built
 
 // ── Helpers ────────────────────────────────────────────────────────
 function fk(n) {
@@ -78,12 +79,14 @@ const MODEL_LABELS = {
 };
 
 function bindHeaderButtons(state) {
+  const accountBtn = document.getElementById("account-btn");
   const insightsBtn = document.getElementById("insights-btn");
   const tipsBtn = document.getElementById("tips-btn");
   const refreshBtn = document.getElementById("refresh-btn");
   const settingsBtn = document.getElementById("settings-btn");
   const backBtn = document.getElementById("back-btn");
 
+  if (accountBtn) accountBtn.addEventListener("click", () => renderAccount(state));
   if (insightsBtn) insightsBtn.addEventListener("click", () => renderInsights(state));
   if (tipsBtn) tipsBtn.addEventListener("click", () => renderTips(state));
   if (refreshBtn) refreshBtn.addEventListener("click", () => {
@@ -248,6 +251,7 @@ function headerHTML(badgeClass, badgeLabel, heroColor, showBack, activeIcon) {
       <div class="hd-right">
         <div class="dot" style="background:${heroColor};box-shadow:0 0 6px ${heroColor}66"></div>
         <span class="badge ${badgeClass}">${badgeLabel}</span>
+        <button class="icon-btn ${activeIcon === 'account' ? 'icon-btn-active' : ''}" id="account-btn" title="Account">👤</button>
         <button class="icon-btn ${activeIcon === 'insights' ? 'icon-btn-active' : ''}" id="insights-btn" title="Insights">📊</button>
         <button class="icon-btn ${activeIcon === 'tips' ? 'icon-btn-active' : ''}" id="tips-btn" title="Token tips">💡</button>
         <button class="icon-btn ${activeIcon === 'refresh' ? 'icon-btn-active' : ''}" id="refresh-btn" title="Refresh">↻</button>
@@ -337,7 +341,7 @@ function renderMain(state) {
         <button class="meta-link" id="main-support-btn">Help</button>
         <span class="meta-dot">·</span>
         ${state.session
-          ? `<button class="meta-link" id="main-signout-btn">${state.session.user?.email || "Account"} · Sign out</button>`
+          ? `<button class="meta-link" id="main-account-btn">👤 ${state.session.user?.email || "Account"}</button>`
           : `<button class="meta-link" id="main-signin-btn">Sign in</button>`}
       </div>
       <button class="new-chat" id="new-chat-btn">+ New chat</button>
@@ -371,12 +375,9 @@ function renderMain(state) {
     });
   }
 
-  const signoutBtn = document.getElementById("main-signout-btn");
-  if (signoutBtn) {
-    signoutBtn.addEventListener("click", async () => {
-      await chrome.storage.local.remove(TT.KEY.AUTH_SESSION);
-      location.reload();
-    });
+  const accountLinkBtn = document.getElementById("main-account-btn");
+  if (accountLinkBtn) {
+    accountLinkBtn.addEventListener("click", () => renderAccount(state));
   }
 }
 
@@ -492,6 +493,85 @@ function renderInsights(state) {
   `;
 
   bindHeaderButtons(state);
+}
+
+// ── Account view ─────────────────────────────────────────────────
+function renderAccount(state) {
+  const root = document.getElementById("root");
+  const pm = platformMeta(state.platform);
+
+  if (!state.session) {
+    root.innerHTML = `
+      ${headerHTML(pm.badgeClass, pm.badgeLabel, TT.COLOR.GREEN, true, "account")}
+      <div class="section" style="padding-bottom:8px">
+        <div class="section-title">Account</div>
+      </div>
+      <div class="no-history" style="padding:24px 14px">
+        Sign in to sync your usage across devices.
+      </div>
+      <div style="padding:0 14px 14px">
+        <button class="new-chat" id="account-signin-btn" style="width:100%">Sign in</button>
+      </div>
+      <div class="footer"><span class="footer-note">v2.3.0</span></div>
+    `;
+    bindHeaderButtons(state);
+    document.getElementById("account-signin-btn").addEventListener("click", () => {
+      chrome.tabs.create({ url: AUTH_PAGE_URL });
+      window.close();
+    });
+    return;
+  }
+
+  const sub = state.subscription;
+  const isActive = sub?.status === "active";
+  const planLabel = isActive ? (sub.plan || "Active") : "Free";
+  const planColor = isActive ? TT.COLOR.GREEN : "#696868";
+
+  root.innerHTML = `
+    ${headerHTML(pm.badgeClass, pm.badgeLabel, TT.COLOR.GREEN, true, "account")}
+    <div class="section" style="padding-bottom:8px">
+      <div class="section-title">Account</div>
+    </div>
+    <div class="data-card" style="margin:0 14px 12px">
+      <div class="data-row">
+        <div class="data-left">
+          <div class="data-name">${state.session.user?.email || "Signed in"}</div>
+          <div class="data-sub">History syncs automatically across devices</div>
+        </div>
+      </div>
+      <div class="data-row">
+        <div class="data-left">
+          <div class="data-name">Plan</div>
+        </div>
+        <div class="data-right">
+          <span class="data-pct" style="color:${planColor}">${planLabel}</span>
+        </div>
+      </div>
+    </div>
+    ${!isActive ? `
+      <div style="padding:0 14px 14px">
+        <button class="new-chat" id="account-upgrade-btn" style="width:100%">Upgrade</button>
+      </div>` : ""}
+    <div style="padding:0 14px 14px">
+      <button class="meta-link" id="account-signout-btn">Sign out</button>
+    </div>
+    <div class="footer"><span class="footer-note">v2.3.0</span></div>
+  `;
+
+  bindHeaderButtons(state);
+
+  const upgradeBtn = document.getElementById("account-upgrade-btn");
+  if (upgradeBtn) {
+    upgradeBtn.addEventListener("click", () => {
+      chrome.tabs.create({ url: PRICING_PAGE_URL });
+      window.close();
+    });
+  }
+
+  document.getElementById("account-signout-btn").addEventListener("click", async () => {
+    await chrome.storage.local.remove(TT.KEY.AUTH_SESSION);
+    location.reload();
+  });
 }
 
 // ── Settings view ────────────────────────────────────────────────
@@ -649,12 +729,13 @@ async function init() {
   } catch (_) { }
 
   renderMain({
-    usage:    data.usage,
-    context:  data.context || {},
-    history:  data.history || [],
+    usage:        data.usage,
+    context:      data.context || {},
+    history:      data.history || [],
     platform,
-    model:    liveModel,
-    session:  session || null,
+    model:        liveModel,
+    session:      session || null,
+    subscription: data.subscription || null,
   });
 }
 

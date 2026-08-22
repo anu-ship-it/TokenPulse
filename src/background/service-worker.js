@@ -83,6 +83,34 @@ async function syncHistoryToCloud() {
   }
 }
 
+// ── Subscription status ──────────────────────────────────────────
+// Returns null when signed out — the Account view treats null as
+// "not signed in" and shows the sign-in prompt instead of a plan.
+// RLS scopes this to the caller's own row automatically (the "Users
+// can view their own subscription" policy on subscriptions) — no
+// explicit user_id filter needed in the query itself.
+async function fetchSubscriptionStatus() {
+  const { [TT.KEY.AUTH_SESSION]: session } = await chrome.storage.local.get(TT.KEY.AUTH_SESSION);
+  if (!session?.access_token) return null;
+
+  try {
+    const res = await fetch(
+      `${TT.SUPABASE.URL}/rest/v1/subscriptions?select=status,plan,current_period_end`,
+      {
+        headers: {
+          "apikey": TT.SUPABASE.ANON_KEY,
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return rows[0] || null;
+  } catch (_) {
+    return null;
+  }
+}
+
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name !== TT.ALARM) return;
   triggerUsageFetch();
@@ -167,7 +195,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             Storage.getHistory(),
             Storage.getSettings(),
           ]);
-          sendResponse({ usage, context, history, settings });
+          const subscription = await fetchSubscriptionStatus();
+          sendResponse({ usage, context, history, settings, subscription });
           break;
         }
 
