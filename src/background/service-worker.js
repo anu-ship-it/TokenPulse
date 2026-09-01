@@ -158,7 +158,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     (async () => {
       const settings = await Storage.getSettings();
       if (settings.notify_response_ready === false) return;
-      chrome.notifications.create(`tt_response_ready_${Date.now()}`, {
+      // Stable per-platform ID, not a fresh timestamp each time: Chrome
+      // REPLACES an existing notification that shares an ID rather than
+      // stacking a new one. An always-unique ID (what this was before)
+      // defeats that — if content.js's awaitingUserReturn gate is ever
+      // bypassed for any reason, a stable ID here is what stops
+      // duplicates from actually piling up as separate notifications.
+      chrome.notifications.create(`tt_response_ready_${msg.platform}`, {
         type: "basic",
         iconUrl: ICON,
         title: `${msg.platformName} — Response ready`,
