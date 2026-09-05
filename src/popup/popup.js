@@ -332,6 +332,12 @@ function renderMain(state) {
     ${pm.hasRateLimits && usage ? rateLimitsHTML(usage) : ""}
     ${dailyHistoryHTML(history || [], platform)}
 
+    ${state.session ? `
+    <div class="account-row" id="main-account-btn">
+      <span class="account-avatar">👤</span>
+      <span class="account-email">${state.session.user?.email || "Account"}</span>
+      <span class="account-chevron">›</span>
+    </div>` : ""}
     <div class="footer">
       <div class="footer-meta-links">
         <button class="meta-link" id="main-rate-btn">⭐ Review</button>
@@ -339,10 +345,9 @@ function renderMain(state) {
          <button class="meta-link" id="main-website-btn">🌐 Website</button>
          <span class="meta-dot">·</span>
         <button class="meta-link" id="main-support-btn">Help</button>
+        ${!state.session ? `
         <span class="meta-dot">·</span>
-        ${state.session
-          ? `<button class="meta-link" id="main-account-btn">👤 ${state.session.user?.email || "Account"}</button>`
-          : `<button class="meta-link" id="main-signin-btn">Sign in</button>`}
+        <button class="meta-link" id="main-signin-btn">Sign in</button>` : ""}
       </div>
       <button class="new-chat" id="new-chat-btn">+ New chat</button>
     </div>
