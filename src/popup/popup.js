@@ -4,7 +4,7 @@ const STORE_REVIEW_URL = "https://chromewebstore.google.com/detail/tokenpulse-%E
 const FORMSPREE_URL = "https://formspree.io/f/xqeoqzdg";
 const WEBSITE_URL = "https://token-pulse.in";
 const AUTH_PAGE_URL = "https://token-pulse.in/auth.html";
-const PRICING_PAGE_URL = "https://token-pulse.in/pricing"; // doesn't exist yet — placeholder until Stripe Checkout is built
+const PRICING_PAGE_URL = "https://token-pulse.in/pricing.html";
 
 // ── Helpers ────────────────────────────────────────────────────────
 function fk(n) {
