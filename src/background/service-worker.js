@@ -226,6 +226,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
       }
     } catch (err) {
+      // This was silently swallowing real errors — content.js never checks
+      // the response for CONTEXT_UPDATE, so a throw in here (e.g. inside
+      // checkContextNotifications) had zero visible symptom anywhere.
+      // Logging it here is what makes it show up in this exact console.
+      console.error("[TokenPulse] message handler error:", msg.type, err);
       sendResponse({ ok: false, error: String(err?.message || err) });
     }
   })();
