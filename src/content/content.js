@@ -1,8 +1,3 @@
-/**
- * content.js v2.3.0
- * Added: Grok support, JS-based bar width sync (replaces CSS width:100%)
- */
-
 (() => {
   "use strict";
 
@@ -351,20 +346,34 @@
       streamTimer = setTimeout(() => {
         if (hadActivity) {
           hadActivity = false;
+          console.log("[TokenPulse debug] silence detected, calling onResponseReady()");
           onResponseReady();
         }
       }, 2000);
     });
 
     obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+    console.log("[TokenPulse debug] response-ready observer attached");
   }
 
   function onResponseReady() {
-    if (document.visibilityState !== "hidden") return;
-    if (lastTokenCount < 50) return;
-    if (awaitingUserReturn) return; // already notified since the user left — don't repeat
+    console.log("[TokenPulse debug] onResponseReady called — visibilityState:", document.visibilityState, "lastTokenCount:", lastTokenCount, "awaitingUserReturn:", awaitingUserReturn);
+
+    if (document.visibilityState !== "hidden") {
+      console.log("[TokenPulse debug] blocked: tab is visible, not hidden");
+      return;
+    }
+    if (lastTokenCount < 50) {
+      console.log("[TokenPulse debug] blocked: lastTokenCount too low:", lastTokenCount);
+      return;
+    }
+    if (awaitingUserReturn) {
+      console.log("[TokenPulse debug] blocked: already notified since last return");
+      return;
+    }
 
     const platformName = TT.PLATFORMS[PLATFORM]?.label || PLATFORM;
+    console.log("[TokenPulse debug] sending RESPONSE_READY for", platformName);
 
     try {
       chrome.runtime.sendMessage({
