@@ -339,8 +339,13 @@
   function startResponseReadyDetector() {
     let hadActivity = false;
     let streamTimer = null;
+    let mutationCount = 0;
 
-    const obs = new MutationObserver(() => {
+    const obs = new MutationObserver((mutations) => {
+      mutationCount++;
+      if (mutationCount === 1 || mutationCount % 20 === 0) {
+        console.log("[TokenPulse debug] mutation observed, count:", mutationCount, "types:", mutations.map(m => m.type).slice(0, 3));
+      }
       hadActivity = true;
       clearTimeout(streamTimer);
       streamTimer = setTimeout(() => {
@@ -352,7 +357,11 @@
       }, 2000);
     });
 
-    obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+    // Added attributes:true as a test — if ChatGPT's current rendering
+    // updates existing nodes via attribute changes rather than adding
+    // nodes or changing text directly, childList+characterData alone
+    // would see nothing at all, which matches what was just observed.
+    obs.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true });
     console.log("[TokenPulse debug] response-ready observer attached");
   }
 
