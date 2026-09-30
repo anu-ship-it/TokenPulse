@@ -6,7 +6,7 @@
 - Smart threshold notifications at 75%, 90%, 100% (50% available, off by default)
 - Settings moved inside popup — no new tabs
 - Session history persists across tab closes and page refreshes
-- Alpha branding — Built by Anoop Kumar and Mansi Rathore
+- Alpha branding — Built by Anoop Kumar and  Rathore
 
 ### Changed
 - Complete UI rebuild — teal color system replacing green

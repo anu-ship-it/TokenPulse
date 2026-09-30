@@ -635,7 +635,7 @@ function renderSettings(state) {
       <div style="padding:0 14px 16px;border-top:1px solid #1a1a1a;margin-top:4px">
         <div style="padding-top:12px">
           <div style="font-size:12px;font-weight:600;color:#4a9ba5">TokenPulse <span style="color:#3a3a3a;font-weight:400">v2.3.0</span></div>
-          <div style="font-size:10px;color:#3a3a3a;margin-top:2px">Built by Anoop Kumar and Mansi Rathore · Alpha</div>
+          <div style="font-size:10px;color:#3a3a3a;margin-top:2px">Built by Anoop Kumar · Alpha</div>
         </div>
       </div>
     `;
